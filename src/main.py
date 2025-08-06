@@ -38,7 +38,7 @@ this mode will inject generated page into an existing notebook")
 @click.option("-i", "--inject", "inject_mode", default=InjectMode.RECENT,
     help="inject mode for the xochitl option, default is 'recent'\n\n\
 recent - inject new page into last opened notebook\n\n\
-current - inject new content into page last closed page",
+current - inject new content into last closed page",
     type=click.Choice(InjectMode, case_sensitive=False))
 def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int], 
         uid: uuid.UUID, margin: int, device, output_to_file: bool, output, 

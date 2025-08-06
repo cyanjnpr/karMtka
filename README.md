@@ -17,6 +17,8 @@ karmtka -s 2 -w 2 -t $'Hello world!\n' -s 3 -w 1 -t 'bits and bytes' -O
 ```
 Above line will create text page with header and a single paragraph and save it to a local file.
 
+![view of the generated text page](docs/example.png)
+
 ## Options
 - `-t, --text` text content of the reMarkable page
 - `-s, --style` text style of the content
