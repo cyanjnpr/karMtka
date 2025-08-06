@@ -1,0 +1,20 @@
+[project]
+name = "karmtka"
+version = "0.1.0"
+description = "command line tool for generating simple reMarkable text pages"
+authors = [
+    {name = "cyanjnpr",email = "150724329+cyanjnpr@users.noreply.github.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "leb128 (>=1.0.8)",
+    "kaitaistruct @ git+https://github.com/kaitai-io/kaitai_struct_python_runtime.git@serialization",
+    "click (>=8.2.1)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
