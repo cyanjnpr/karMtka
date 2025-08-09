@@ -1,7 +1,7 @@
 # kar*M*tka
 
 generate simple text pages in reMarkable lines format and inject them 
-into existing notebooks. <br/>
+into existing notebooks.  
 
 Serializer for the reMarkable binary format was created through [reMarkable kaitai specification](https://github.com/cyanjnpr/reMarkable-kaitai-v6).
 
@@ -36,8 +36,28 @@ Above line will create text page with header and a single paragraph and save it 
   - next - inject new (overwrite) content into page next to the 'current' one
   - last - inject new (overwrite) content into last page in last closed notebook
 
+## Building
+
+You can compile this repo to a binary standalone file using Nuitka the python compiler.
+
+> [!Note]
+> This project is based on python version 3.9 in order
+> to make it work on older reMarkable software versions.
+> For more information check [Nuitka documentation](https://nuitka.net/user-documentation/common-issue-solutions.html#linux-standalone).
+
+> [!Warning]
+> Nuitka does not support cross-compilation
+> at the moment of writing.
+> It is necessary to emulate the target architecture during compilation.
+
+To compile it to a standalone file, install Nuitka through pip and run:
+```
+nuitka --deployment --mode=onefile src/main.py
+```
+
 ### Disclaimer(s)
 
 - Serializer was prepared based solely on files produced by xochitl 3.8.2.
 - There is a risk of damaging existing notebooks while using this tool.
 - This repository is not affiliated with reMarkable AS.
+
