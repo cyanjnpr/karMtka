@@ -24,8 +24,9 @@ def retrieve_recent_list() -> List[RecentItem]:
         if parts[len(parts) - 1] == "metadata":
             with open("{}{}".format(XOCHITL_PATH, file), 'r') as f:
                 metadata = json.load(f)
-                last_access = metadata["lastOpened"] if metadata["lastOpened"] != None else 0
-                last_page = metadata["lastOpenedPage"] if metadata["lastOpenedPage"] != None else 0
-                recent.append(RecentItem(parts[0], last_access, last_page))
+                if ("lastOpened" in metadata and "lastOpenedPage" in metadata):
+                    last_access = metadata["lastOpened"] 
+                    last_page = metadata["lastOpenedPage"]
+                    recent.append(RecentItem(parts[0], last_access, last_page))
     recent = sorted(recent, key=lambda r: r.last_access, reverse=True)
     return recent
