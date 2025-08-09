@@ -25,14 +25,16 @@ Above line will create text page with header and a single paragraph and save it 
 - `-w, --weight` font weight of the content
 - `-u, --uuid` UUID of the page
 - `-m, --margin` margin of the text content
-- `-d, --device` target device for the generated page, default is 'rm2'
+- `-d, --device` target device for the generated page, default is 'rm'
 - `-O` save the page to a local file named after the uuid
 - `-o, --output` save the page to a local file
 - `-x, --xochitl` run in reMarkable mode (on the device)
   - this mode will inject generated page into an existing notebook
-- `-i, --inject` inject mode for the xochitl option, default is 'recent'
-  - recent - inject new page into last opened notebook
-  - current - inject new content into last closed page
+- `-i, --inject` inject mode for the xochitl option, default is 'append'
+  - append - inject new page into last closed notebook
+  - current - inject new (overwrite) content into last closed page
+  - next - inject new (overwrite) content into page next to the 'current' one
+  - last - inject new (overwrite) content into last page in last closed notebook
 
 ### Disclaimer(s)
 

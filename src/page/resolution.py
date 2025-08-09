@@ -23,7 +23,7 @@ class Resolution():
         return self.height - 2 * self.height
 
     @staticmethod
-    def rM2():
+    def rM():
         return Resolution(1872, 1404)
     
     @staticmethod
@@ -32,6 +32,9 @@ class Resolution():
     
 
 class DeviceResolution(Enum):
-    RM = Resolution.rM2()
-    RM2 = Resolution.rM2()
+    RM = Resolution.rM()
     RMPP = Resolution.rMPP()
+
+    @staticmethod
+    def choices():
+        return [DeviceResolution.RM.name, DeviceResolution.RMPP.name]

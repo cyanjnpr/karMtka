@@ -20,7 +20,7 @@ class Page(rm_v6.RmV6):
         ]
 
     def build_append_stats(self, lines: List[str]):
-        line_count = sum([line.count("\n") for line in lines])
+        line_count = 1 + sum([line.count("\n") for line in lines])
         char_count = sum([len(line) for line in lines])
         self.packets.append(StatsPacket(self, char_count, line_count).pack())
 
