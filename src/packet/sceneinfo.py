@@ -7,7 +7,7 @@ class SceneInfoPacket(rm_v6.RmV6.SceneInfoPacket):
     min_ver = 0
     ver = 1
 
-    def __init__(self, parent):
+    def __init__(self, parent, current_layer_value: RemarkableId = RemarkableId.zero()):
         self.parent = create_packet_backbone(parent)
         super().__init__(None, self.parent, self.parent._root)
         scene_cnt = SigCounter(1)
@@ -18,7 +18,7 @@ class SceneInfoPacket(rm_v6.RmV6.SceneInfoPacket):
         self.current_layer.timestamp_sig = create_sig_id(self.current_layer, subfields_cnt.next())
         self.current_layer.timestamp = RemarkableId.zero().to_kaitai(self.current_layer)
         self.current_layer.value_sig = create_sig_id(self.current_layer, subfields_cnt.next())
-        self.current_layer.value = RemarkableId.zero().to_kaitai(self.current_layer)
+        self.current_layer.value = current_layer_value.to_kaitai(self.current_layer)
         self.current_layer.current_layer_length = self.current_layer.len - 5
 
         subfields_cnt.reset()
