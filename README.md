@@ -10,14 +10,16 @@ Serializer for the reMarkable binary format was created through [reMarkable kait
 This tool is intended to be used on device to allow external apps 
 such as KOReader to copy/paste parts of opened documents into rM notebooks.
 
-It is possible to run it outside of reMarkable and save generated page to a .rm file.
+It is also possible to run it outside of reMarkable and save generated page to a .rm file.
+
 Example usage:
 ```
-karmtka -s 2 -w 2 -t $'Hello world!\n' -s 3 -w 1 -t 'bits and bytes' -O
+cat /etc/os-release | karmtka -g tux.png -q 15 -s 4 -x -i current --overwrite
 ```
-Above line will create text page with header and a single paragraph and save it to a local file.
+Above line will inject image from the file tux.png and piped output of the cat command 
+into the current reMarkable notebook page.
 
-![view of the generated text page](docs/example.png)
+![view of the generated reMarkable page](docs/example.png)
 
 ## Options
 - `-t, --text` text content of the reMarkable page
@@ -56,7 +58,7 @@ You can compile this repo to a binary standalone file using Nuitka the python co
 
 To compile it to a standalone file, install Nuitka through pip and run:
 ```
-nuitka --deployment --mode=onefile src/main.py
+python -m nuitka --deployment --mode=onefile src/main.py
 ```
 
 ### Disclaimer(s)
