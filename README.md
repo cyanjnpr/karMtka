@@ -35,9 +35,12 @@ Above line will create text page with header and a single paragraph and save it 
   - current - inject new (overwrite) content into last closed page
   - next - inject new (overwrite) content into page next to the 'current' one
   - last - inject new (overwrite) content into last page in last closed notebook
+- `--overwrite` confirm overwrite operation if such mode is selected
+- `-g, --image` path to the image file to be injected into the page
+- `-q, --quality` quality of the injected images, default is '3'
+  - using values higher than the default may result in a huge file size
 
 ### Disclaimer(s)
 
-- Serializer was prepared based solely on files produced by xochitl 3.8.2.
 - There is a risk of damaging existing notebooks while using this tool.
 - This repository is not affiliated with reMarkable AS.

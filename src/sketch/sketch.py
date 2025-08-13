@@ -45,11 +45,13 @@ class Sketch():
             if (float(img.image_file.width) / float(img.image_file.height) > 
                     float(screen_width) / float(screen_height)):
                 if (img.image_file.width > screen_width):
-                    img.image_file = img.image_file.resize((screen_width, 
+                    img.image_file = img.image_file.resize((
+                        screen_width, 
                         int(img.image_file.height * screen_width / float(img.image_file.width))))
             else:
                 if (img.image_file.height > screen_height):
-                    img.image_file = img.image_file.resize((int(screen_width * screen_height / float(img.image_file.height)), 
+                    img.image_file = img.image_file.resize((
+                        int(screen_width * screen_height / float(img.image_file.height)), 
                         img.image_file.height))
             origin_x = -img.image_file.width / 2.0
             origin_y = device_type.margin + (screen_height - img.image_file.height) / 2.0

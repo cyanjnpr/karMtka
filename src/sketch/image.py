@@ -30,7 +30,7 @@ class SketchImage():
         self.EOF = False
         self.image_file = None
         try:
-            self.image_file = Image.open(self.image_path).convert('L')
+            self.image_file = Image.open(self.image_path).convert('LA')
             self.saved_pixel = self.next_pixel()
         except:
             self.EOF = True
@@ -50,14 +50,22 @@ class SketchImage():
         else:
             following_x = x - 1
         if (following_x < 0  or following_x == self.image_file.width): return -1
-        return self.value_to_shade(self.image_file.getpixel((following_x, self.current_y)))
+        return self.value_to_shade(self.getpixel((following_x, self.current_y)))
+
+    def getpixel(self, xy: Tuple[int, int]) -> int:
+        val, alpha = self.image_file.getpixel(xy)
+        if (alpha == 255):
+            return val 
+        elif (alpha == 0):
+            return 255
+        return val + ((255 - val) * (1 - (alpha / 255)))
 
     def next_pixel(self) -> Tuple[Tuple[int, int], float]:
         for y in range(self.current_y, self.image_file.height):
             self.current_y = y
             if (self.left_to_right):
                 for x in range(self.current_x, self.image_file.width):
-                    val = self.image_file.getpixel((x, y))
+                    val = self.getpixel((x, y))
                     shade = self.value_to_shade(val)
                     if (self.previous_shade != shade or self.following_pixel_shade(x) != shade):
                         self.current_x = x + 1
@@ -65,7 +73,7 @@ class SketchImage():
                         return ((x, y), val)
             else:
                 for x in range(self.current_x, -1, -1):
-                    val = self.image_file.getpixel((x, y))
+                    val = self.getpixel((x, y))
                     shade = self.value_to_shade(val)
                     if (self.previous_shade != shade or self.following_pixel_shade(x) != shade):
                         self.current_x = x - 1

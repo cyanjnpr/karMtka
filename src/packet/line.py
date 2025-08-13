@@ -2,7 +2,6 @@ from kaitai import rm_v6
 from .id import RemarkableId
 from .packet import create_packet_backbone, SigCounter, create_header, create_sig_id, create_sig_dbl, create_sig_len, create_sig_u4
 import math
-from typing import Self
 from enum import Enum
 
 class SketchTools(Enum):
@@ -30,11 +29,7 @@ class Point(rm_v6.RmV6.Point):
         self.direction = int(min(direction, 1) / (2 * math.pi) * 255)
         self.pressure = int(min(pressure, 1) * 255)
 
-    def set_direction_degree(self, degree: int):
-        degree = abs(degree) % 360
-        #self.direction = float(degree) / 180.0 * math.pi
-
-    def translate_by(self, x: float, y: float) -> Self:
+    def translate_by(self, x: float, y: float):
         self.x += x
         self.y += y
         return self
