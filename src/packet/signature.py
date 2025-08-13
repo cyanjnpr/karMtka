@@ -57,3 +57,11 @@ def create_sig_u4(parent: rm_v6.ReadWriteKaitaiStruct, val: int) -> rm_v6.RmV6.S
     sig = rm_v6.RmV6.SigU4(None, parent, parent._root)
     sig.sig = val
     return sig
+
+def create_sig_dbl(parent: rm_v6.ReadWriteKaitaiStruct, val: int) -> rm_v6.RmV6.SigDbl:
+    if (val < 0 or val > 15):
+        raise Exception("signature must be a valid hex digit")
+    val = (val << 4) + 0x08
+    sig = rm_v6.RmV6.SigDbl(None, parent, parent._root)
+    sig.sig = val
+    return sig

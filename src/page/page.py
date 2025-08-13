@@ -3,6 +3,7 @@ import uuid
 from typing import List
 from .resolution import DeviceResolution
 from packet import *
+from sketch import Sketch
 
 class Page(rm_v6.RmV6):
 
@@ -11,6 +12,7 @@ class Page(rm_v6.RmV6):
         self.device_type = device
         self.margin = margin
         self.header = "reMarkable .lines file, version=6          "
+        self.layer_ids: List[RemarkableId] = []
         self.moves: List[TreeMovePacket] = []
         self.nodes: List[TreeNodePacket] = []
         self.groups: List[GroupItemPacket] = []
@@ -32,18 +34,27 @@ class Page(rm_v6.RmV6):
         for layer in range(1, layers+1):
             layer_id = RemarkableId(0)
             layer_timestamp = RemarkableId(0)
+            self.layer_ids.append(layer_id)
             self.nodes.append(TreeNodePacket(self, "Layer {}".format(layer), layer_id, layer_timestamp))
             self.moves.append(TreeMovePacket(self, root_id, layer_id))
             self.groups.append(GroupItemPacket(self, root_id, layer_id))
 
-    def build(self, lines: List[str], styles: List[int], weights: List[int]):
+    def build_append_lines(self, images: List[str], quality: int):
+        for layer, image_path in enumerate(images):
+            if (len(self.layer_ids) <= layer): return
+            s = Sketch(self, self.layer_ids[layer])
+            s.draw_image(image_path, quality, self.device_type.value)
+            for l in s.lines: self.packets.append(l.pack())
+
+    def build(self, lines: List[str], styles: List[int], weights: List[int], images: List[str], quality: int):
         self.build_append_stats(lines)
-        self.packets.append(SceneInfoPacket(self).pack())
-        self.build_tree()
+        self.build_tree(1 + len(images))
+        self.packets.append(SceneInfoPacket(self, self.layer_ids[len(self.layer_ids) - 1]).pack())
         self.packets.extend([move.pack() for move in self.moves])
         t = TextPacket(self, lines, styles, weights, 
             self.device_type.value.with_margin(self.margin).w(), self.margin)
         self.packets.append(t.pack())
         self.packets.extend([node.pack() for node in self.nodes])
         self.packets.extend([group.pack() for group in self.groups])
+        self.build_append_lines(images, quality)
 

@@ -6,14 +6,18 @@ from . import XOCHITL_PATH
 
 class InjectMode(Enum):
     APPEND = 0
-    CURRENT = 1
-    LAST = 2
-    NEXT = 3
+    CURRENT = 253
+    LAST = 254
+    NEXT = 255
 
     @staticmethod
     def choices():
         return [InjectMode.APPEND.name, InjectMode.CURRENT.name, 
             InjectMode.LAST.name, InjectMode.NEXT.name]
+    
+    def is_overwrite_mode(self) -> bool:
+        return (self.value >> 7) > 0
+
 
 class PageInfo:
 

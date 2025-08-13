@@ -143,7 +143,7 @@ class TextPacket(rm_v6.RmV6.TextPacket):
         self.parent = create_packet_backbone(parent)
         super().__init__(None, self.parent, self.parent._root)
         self.parent_id_sig = create_sig_id(self, 1)
-        # only one text packet per file as of 3.8.2 (i think?), parent_id always zero
+        # only one text packet per file (i think?), parent_id always zero
         self.parent_id = RemarkableId.zero().to_kaitai(self)
         self.length_with_styles_sig = create_sig_len(self, 2)
         self.length_with_text_sig = create_sig_len(self, 1)

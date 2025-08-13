@@ -6,3 +6,4 @@ from .stats import StatsPacket
 from .sceneinfo import SceneInfoPacket
 from .tree import TreeMovePacket, TreeNodePacket
 from .group import GroupItemPacket
+from .line import LinePacket, Point

@@ -932,6 +932,7 @@ class RmV6(ReadWriteKaitaiStruct):
 
         @property
         def len(self):
+            """length without array."""
             if hasattr(self, '_m_len'):
                 return self._m_len
 
@@ -1122,6 +1123,7 @@ class RmV6(ReadWriteKaitaiStruct):
 
         @property
         def len(self):
+            """contrary to other len fields this one is not derived manually because of the weight field."""
             if hasattr(self, '_m_len'):
                 return self._m_len
 
@@ -1167,12 +1169,12 @@ class RmV6(ReadWriteKaitaiStruct):
             self.ts_sig._read()
             self.ts = RmV6.IdField(self._io, self, self._root)
             self.ts._read()
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 self.move_id_sig = RmV6.SigId(self._io, self, self._root)
                 self.move_id_sig._read()
 
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 self.move_id = RmV6.IdField(self._io, self, self._root)
                 self.move_id._read()
@@ -1193,11 +1195,11 @@ class RmV6(ReadWriteKaitaiStruct):
 
             self.ts_sig._fetch_instances()
             self.ts._fetch_instances()
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 self.move_id_sig._fetch_instances()
 
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 self.move_id._fetch_instances()
 
@@ -1224,11 +1226,11 @@ class RmV6(ReadWriteKaitaiStruct):
 
             self.ts_sig._write__seq(self._io)
             self.ts._write__seq(self._io)
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 self.move_id_sig._write__seq(self._io)
 
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 self.move_id._write__seq(self._io)
 
@@ -1277,14 +1279,14 @@ class RmV6(ReadWriteKaitaiStruct):
                 raise kaitaistruct.ConsistencyError(u"ts", self.ts._root, self._root)
             if self.ts._parent != self:
                 raise kaitaistruct.ConsistencyError(u"ts", self.ts._parent, self)
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 if self.move_id_sig._root != self._root:
                     raise kaitaistruct.ConsistencyError(u"move_id_sig", self.move_id_sig._root, self._root)
                 if self.move_id_sig._parent != self:
                     raise kaitaistruct.ConsistencyError(u"move_id_sig", self.move_id_sig._parent, self)
 
-            if (((self.length - self.points_length) - 33) > 0):
+            if ((((self.length - self.points_length) - self.ts.len) - 31) > 0):
                 pass
                 if self.move_id._root != self._root:
                     raise kaitaistruct.ConsistencyError(u"move_id", self.move_id._root, self._root)
@@ -1294,10 +1296,11 @@ class RmV6(ReadWriteKaitaiStruct):
 
         @property
         def len(self):
+            """length without array."""
             if hasattr(self, '_m_len'):
                 return self._m_len
 
-            self._m_len = (((37 + self.ts.len) + self.move_id.len) if (((self.length - self.points_length) - 33) > 0) else (36 + self.ts.len))
+            self._m_len = (((37 + self.ts.len) + self.move_id.len) if ((((self.length - self.points_length) - self.ts.len) - 31) > 0) else (36 + self.ts.len))
             return getattr(self, '_m_len', None)
 
         def _invalidate_len(self):
@@ -1446,51 +1449,42 @@ class RmV6(ReadWriteKaitaiStruct):
             self._root = _root
 
         def _read(self):
-            self.unknown_byte_1 = self._io.read_u1()
-            self.uuid_length_sig = RmV6.SigLen(self._io, self, self._root)
-            self.uuid_length_sig._read()
-            self.uuid_packet_length = self._io.read_u4le()
-            self.uuid_length = self._io.read_u1()
-            self.uuid = []
-            for i in range(16):
-                self.uuid.append(self._io.read_u1())
+            self.num_uuids = self._io.read_u1()
+            self.uuids = []
+            for i in range(self.num_uuids):
+                _t_uuids = RmV6.UuidItem(self._io, self, self._root)
+                _t_uuids._read()
+                self.uuids.append(_t_uuids)
 
-            self.second = self._io.read_u1()
-            self.unknown_byte_2 = self._io.read_u1()
 
 
         def _fetch_instances(self):
             pass
-            self.uuid_length_sig._fetch_instances()
-            for i in range(len(self.uuid)):
+            for i in range(len(self.uuids)):
                 pass
+                self.uuids[i]._fetch_instances()
 
 
 
         def _write__seq(self, io=None):
             super(RmV6.UuidPacket, self)._write__seq(io)
-            self._io.write_u1(self.unknown_byte_1)
-            self.uuid_length_sig._write__seq(self._io)
-            self._io.write_u4le(self.uuid_packet_length)
-            self._io.write_u1(self.uuid_length)
-            for i in range(len(self.uuid)):
+            self._io.write_u1(self.num_uuids)
+            for i in range(len(self.uuids)):
                 pass
-                self._io.write_u1(self.uuid[i])
+                self.uuids[i]._write__seq(self._io)
 
-            self._io.write_u1(self.second)
-            self._io.write_u1(self.unknown_byte_2)
 
 
         def _check(self):
             pass
-            if self.uuid_length_sig._root != self._root:
-                raise kaitaistruct.ConsistencyError(u"uuid_length_sig", self.uuid_length_sig._root, self._root)
-            if self.uuid_length_sig._parent != self:
-                raise kaitaistruct.ConsistencyError(u"uuid_length_sig", self.uuid_length_sig._parent, self)
-            if (len(self.uuid) != 16):
-                raise kaitaistruct.ConsistencyError(u"uuid", len(self.uuid), 16)
-            for i in range(len(self.uuid)):
+            if (len(self.uuids) != self.num_uuids):
+                raise kaitaistruct.ConsistencyError(u"uuids", len(self.uuids), self.num_uuids)
+            for i in range(len(self.uuids)):
                 pass
+                if self.uuids[i]._root != self._root:
+                    raise kaitaistruct.ConsistencyError(u"uuids", self.uuids[i]._root, self._root)
+                if self.uuids[i]._parent != self:
+                    raise kaitaistruct.ConsistencyError(u"uuids", self.uuids[i]._parent, self)
 
 
         @property
@@ -1498,7 +1492,7 @@ class RmV6(ReadWriteKaitaiStruct):
             if hasattr(self, '_m_len'):
                 return self._m_len
 
-            self._m_len = 25
+            self._m_len = (1 + (self.num_uuids * 24))
             return getattr(self, '_m_len', None)
 
         def _invalidate_len(self):
@@ -1737,6 +1731,7 @@ class RmV6(ReadWriteKaitaiStruct):
 
         @property
         def len(self):
+            """length without array."""
             if hasattr(self, '_m_len'):
                 return self._m_len
 
@@ -2265,6 +2260,69 @@ class RmV6(ReadWriteKaitaiStruct):
                 return self._m_len
 
             self._m_len = (12 + self.timestamp.len)
+            return getattr(self, '_m_len', None)
+
+        def _invalidate_len(self):
+            del self._m_len
+
+    class UuidItem(ReadWriteKaitaiStruct):
+        def __init__(self, _io=None, _parent=None, _root=None):
+            self._io = _io
+            self._parent = _parent
+            self._root = _root
+
+        def _read(self):
+            self.uuid_length_sig = RmV6.SigLen(self._io, self, self._root)
+            self.uuid_length_sig._read()
+            self.uuid_packet_length = self._io.read_u4le()
+            self.uuid_length = self._io.read_u1()
+            self.uuid = []
+            for i in range(16):
+                self.uuid.append(self._io.read_u1())
+
+            self.second = self._io.read_u1()
+            self.unknown_byte_2 = self._io.read_u1()
+
+
+        def _fetch_instances(self):
+            pass
+            self.uuid_length_sig._fetch_instances()
+            for i in range(len(self.uuid)):
+                pass
+
+
+
+        def _write__seq(self, io=None):
+            super(RmV6.UuidItem, self)._write__seq(io)
+            self.uuid_length_sig._write__seq(self._io)
+            self._io.write_u4le(self.uuid_packet_length)
+            self._io.write_u1(self.uuid_length)
+            for i in range(len(self.uuid)):
+                pass
+                self._io.write_u1(self.uuid[i])
+
+            self._io.write_u1(self.second)
+            self._io.write_u1(self.unknown_byte_2)
+
+
+        def _check(self):
+            pass
+            if self.uuid_length_sig._root != self._root:
+                raise kaitaistruct.ConsistencyError(u"uuid_length_sig", self.uuid_length_sig._root, self._root)
+            if self.uuid_length_sig._parent != self:
+                raise kaitaistruct.ConsistencyError(u"uuid_length_sig", self.uuid_length_sig._parent, self)
+            if (len(self.uuid) != 16):
+                raise kaitaistruct.ConsistencyError(u"uuid", len(self.uuid), 16)
+            for i in range(len(self.uuid)):
+                pass
+
+
+        @property
+        def len(self):
+            if hasattr(self, '_m_len'):
+                return self._m_len
+
+            self._m_len = 24
             return getattr(self, '_m_len', None)
 
         def _invalidate_len(self):

@@ -20,7 +20,7 @@ class Resolution():
         return self.width - 2 * self.margin
     
     def h(self):
-        return self.height - 2 * self.height
+        return self.height - 2 * self.margin
 
     @staticmethod
     def rM():

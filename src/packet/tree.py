@@ -58,9 +58,14 @@ class TreeNodePacket(rm_v6.RmV6.SceneTreeNodePacket):
         self.node_value_sig = create_sig_u1(self, cnt.next())
         self.node_value = 1
         self.node_length = 3 + self.node.len
-    
+
+    def rename(self, label: str):
+        self.name = label
+        self.name_length = 1 + self.name.len + self.timestamp.len
+
     def pack(self) -> rm_v6.RmV6.Packet:
         self.parent.packet_body = self
         self.parent.packet_header = create_header(self.parent, self.len,
             TreeNodePacket.min_ver, TreeNodePacket.ver, TreeNodePacket.kind)
         return self.parent
+    
