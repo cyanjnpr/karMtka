@@ -21,6 +21,8 @@ into the current reMarkable notebook page.
 
 ![view of the generated reMarkable page](docs/example.png)
 
+There is a risk of damaging existing notebooks while using this tool.
+
 ## Options
 - `-t, --text` text content of the reMarkable page
 - `-s, --style` text style of the content
@@ -61,8 +63,6 @@ To compile it to a standalone file, install Nuitka through pip and run:
 python -m nuitka --deployment --mode=onefile src/main.py
 ```
 
-### Disclaimer(s)
+This repository is not affiliated with reMarkable AS.
 
-- There is a risk of damaging existing notebooks while using this tool.
-- This repository is not affiliated with reMarkable AS.
 
