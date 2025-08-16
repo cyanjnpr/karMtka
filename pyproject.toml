@@ -1,7 +1,7 @@
 [project]
 name = "karmtka"
 version = "0.2.1"
-description = "command line tool for generating simple reMarkable text pages"
+description = "command line tool for generating simple reMarkable pages"
 authors = [
     {name = "cyanjnpr",email = "150724329+cyanjnpr@users.noreply.github.com"}
 ]
