@@ -1,6 +1,6 @@
 # kar*M*tka
 
-generate simple text pages in reMarkable lines format and inject them 
+generate simple pages in reMarkable lines format and inject them 
 into existing notebooks.  
 
 Serializer for the reMarkable binary format was created through [reMarkable kaitai specification](https://github.com/cyanjnpr/reMarkable-kaitai-v6).
@@ -46,23 +46,38 @@ There is a risk of damaging existing notebooks while using this tool.
 
 ## Building
 
-You can compile this repo to a binary standalone file using Nuitka the python compiler.
-
 > [!Note]
-> This project is based on python version 3.9 in order
-> to make it work on older reMarkable software versions.
+> This project is based on python version 3.9.
+>
+> Python was chosen, because of kaitai limitations when it comes to serialization.
+>
+> Soon to be deprecated version 3.9 was chosen to 
+> make sure this project works on older reMarkable software versions.
 > For more information check [Nuitka documentation](https://nuitka.net/user-documentation/common-issue-solutions.html#linux-standalone).
+
+Compilation to standalone binary is possible thanks to Nuitka python compiler.
 
 > [!Warning]
 > Nuitka does not support cross-compilation
 > at the moment of writing.
 > It is necessary to emulate the target architecture during compilation.
 
-To compile it to a standalone file, install Nuitka through pip and run:
+To emulate target architecture with docker you will need to install QEMU and binary format rules for QEMU emulation.
+
+
+Docker compose file `compose.yaml` contains service definitions for building binaries for reMarkable 1, 2 and reMarkable Paper Pro.
+To compile repo to binary standalone for your device run `docker compose` with matching *--profile* option:
+```bash
+# compile for reMarkable 1 & 2
+docker compose --profile rm up
+
+# compile for reMarkable Paper Pro
+docker compose --profile rmpp up
 ```
-python -m nuitka --deployment --mode=onefile src/main.py
-```
+This process may take a while.
+
 
 This repository is not affiliated with reMarkable AS.
+
 
 
