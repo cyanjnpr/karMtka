@@ -40,6 +40,19 @@ class SketchImage():
         self.EOF = True
         if (self.image_file != None): self.image_file.close()
 
+    def fit(self, screen_width: int, screen_height: int):
+        if (float(self.image_file.width) / float(self.image_file.height) > 
+                float(screen_width) / float(screen_height)):
+            if (self.image_file.width > screen_width):
+                self.image_file = self.image_file.resize((
+                    screen_width, 
+                    int(self.image_file.height * screen_width / float(self.image_file.width))))
+        else:
+            if (self.image_file.height > screen_height):
+                self.image_file = self.image_file.resize((
+                    int(screen_width * screen_height / float(self.image_file.height)), 
+                    self.image_file.height))
+
     def value_to_shade(self, val: float) -> int:
         return math.floor(val / 256 * self.shades)
     
