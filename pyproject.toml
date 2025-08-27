@@ -1,19 +1,19 @@
 [project]
 name = "karmtka"
-version = "0.2.1"
+version = "0.2.2"
 description = "command line tool for generating simple reMarkable pages"
-authors = [
-    {name = "cyanjnpr",email = "150724329+cyanjnpr@users.noreply.github.com"}
+authors = [ 
+    { name = "cyanjnpr" },
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = [
-    "leb128 (>=1.0.8)",
-    "click (>=8.1.7)",
-    "pillow (>=11.3.0)",
-    "kaitaistruct @ git+https://github.com/kaitai-io/kaitai_struct_python_runtime.git@serialization"
-]
+
+[tool.poetry.dependencies]
+leb128 = "^1.0.8"
+click = "^8.1.7"
+pillow = "^11.3.0"
+kaitaistruct = { git = "https://github.com/kaitai-io/kaitai_struct_python_runtime.git", branch = "serialization" }
 
 [tool.poetry]
 package-mode = false

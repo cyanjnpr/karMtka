@@ -50,8 +50,8 @@ class SketchImage():
         else:
             if (self.image_file.height > screen_height):
                 self.image_file = self.image_file.resize((
-                    int(screen_width * screen_height / float(self.image_file.height)), 
-                    self.image_file.height))
+                    int(self.image_file.width * screen_height / float(self.image_file.height)), 
+                    screen_height))
 
     def value_to_shade(self, val: float) -> int:
         return math.floor(val / 256 * self.shades)

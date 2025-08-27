@@ -16,6 +16,8 @@ class SketchTools(Enum):
 
 class SketchColors(Enum):
     BLACK = 0
+    GRAY = 1
+    WHITE = 2
 
 class Point(rm_v6.RmV6.Point):
 
