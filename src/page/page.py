@@ -48,8 +48,9 @@ class Page(rm_v6.RmV6):
         for layer, image_path in enumerate(images):
             if (C_SKETCH_IMPLEMENTATION):
                 s = CSketch(self.device_type.value)
-                self.raw.extend(s.convert(
-                    image_path, self.layer_ids[layer].minor, RemarkableId.internal_counter, quality))
+                RemarkableId.internal_counter, raw = s.convert(
+                    image_path, self.layer_ids[layer].minor, RemarkableId.internal_counter, quality)
+                self.raw.extend(raw)
             else:
                 if (len(self.layer_ids) <= layer): return
                 s = Sketch(self, self.layer_ids[layer])

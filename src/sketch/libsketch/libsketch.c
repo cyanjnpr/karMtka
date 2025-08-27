@@ -148,7 +148,7 @@ size_t serialize_packet(LinePacket packet, char* dest) {
     return n;
 }
 
-size_t convert(char* filename, int page_width, int page_height, int margin, int layer_id, int counter, int shades, char* buf) {
+size_t convert(char* filename, int page_width, int page_height, int margin, int layer_id, int *id_counter, int shades, char* buf) {
     size_t result = 0;
 
     int width = 0;
@@ -217,14 +217,16 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
         left_to_right = !left_to_right;
 
         if (arrlen(points) >= POINTS_CAP) {
-            result += serialize_packet(create_packet(layer_id, counter++, points), buf + result);
+            result += serialize_packet(create_packet(layer_id, (*id_counter)++, points), buf + result);
+            arrfree(points);
             points = NULL;
         }
     }
     stbi_image_free(data);
 
     if (arrlen(points) > 0) {
-        result += serialize_packet(create_packet(layer_id, counter++, points), buf + result);
+        result += serialize_packet(create_packet(layer_id, (*id_counter)++, points), buf + result);
+        arrfree(points);
     }
     return result;
 }

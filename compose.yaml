@@ -2,6 +2,8 @@ services:
   karmtka-build-armv7:
     platform: linux/arm/v7
     build: .
+    environment:
+      - C_SKETCH_IMPLEMENTATION=${C_SKETCH_IMPLEMENTATION}
     volumes:
       - .:/build
     working_dir: /build
@@ -9,6 +11,8 @@ services:
   karmtka-build-arm64v8:
     platform: linux/arm64/v8
     build: .
+    environment:
+      - C_SKETCH_IMPLEMENTATION=${C_SKETCH_IMPLEMENTATION}
     volumes:
       - .:/build
     working_dir: /build

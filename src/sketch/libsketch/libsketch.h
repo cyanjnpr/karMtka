@@ -106,6 +106,6 @@ int get_pixel(stbi_uc* data, int x, int y, int width);
 
 size_t serialize_packet(LinePacket packet, char* dest);
 
-size_t convert(char* filename, int page_width, int page_height, int margin, int layer_id, int counter, int shades, char* buf);
+size_t convert(char* filename, int page_width, int page_height, int margin, int layer_id, int* id_counter, int shades, char* buf);
 
 #endif

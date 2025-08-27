@@ -6,3 +6,7 @@
           - 'libsketch'
         suffixes:
           - 'so'
+  anti-bloat:
+    - no-follow:
+        'PIL': 'ignore'
+

@@ -12,8 +12,12 @@ requires-python = ">=3.9"
 [tool.poetry.dependencies]
 leb128 = "^1.0.8"
 click = "^8.1.7"
-pillow = "^11.3.0"
 kaitaistruct = { git = "https://github.com/kaitai-io/kaitai_struct_python_runtime.git", branch = "serialization" }
+
+pillow = { version = "^11.3.0", optional = true }
+
+[tool.poetry.extras]
+sketch = ["pillow"]
 
 [tool.poetry]
 package-mode = false
