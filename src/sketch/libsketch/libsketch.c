@@ -1,11 +1,11 @@
 #include <stdbool.h>
 
 #define STB_DS_IMPLEMENTATION
-#include "stb_ds.h"
+#include <stb/stb_ds.h>
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb/stb_image.h>
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include "stb_image_resize2.h"
+#include <stb/stb_image_resize.h>
 
 #include "libsketch.h"
 
@@ -168,7 +168,7 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
             height = height * page_width / (float)width;
             width = page_width;
             data = malloc(width * height * 2);
-            stbir_resize_uint8_linear(copy, in_w, in_h, 0,
+            stbir_resize_uint8(copy, in_w, in_h, 0,
                 data, width, height, 0, 2);
             stbi_image_free(copy);
         }
@@ -180,7 +180,7 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
             width = width * page_height / (float)height;
             height = page_height;
             data = malloc(width * height * 2);
-            stbir_resize_uint8_linear(copy, in_w, in_h, 0,
+            stbir_resize_uint8(copy, in_w, in_h, 0,
                 data, width, height, 0, 2);
             stbi_image_free(copy);
         }
