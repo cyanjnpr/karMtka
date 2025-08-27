@@ -3,7 +3,11 @@ import uuid
 from typing import List
 from .resolution import DeviceResolution
 from packet import *
-from sketch import Sketch
+from config import C_SKETCH_IMPLEMENTATION
+if (C_SKETCH_IMPLEMENTATION):
+    from sketch import CSketch
+else:
+    from sketch import Sketch
 
 class Page(rm_v6.RmV6):
 
@@ -20,6 +24,7 @@ class Page(rm_v6.RmV6):
             UuidPacket(self, uid).pack(),
             MigrationPacket(self).pack()
         ]
+        self.raw = bytearray()
 
     def build_append_stats(self, lines: List[str]):
         line_count = 1 + sum([line.count("\n") for line in lines])
@@ -41,10 +46,15 @@ class Page(rm_v6.RmV6):
 
     def build_append_lines(self, images: List[str], quality: int):
         for layer, image_path in enumerate(images):
-            if (len(self.layer_ids) <= layer): return
-            s = Sketch(self, self.layer_ids[layer])
-            s.draw_image(image_path, quality, self.device_type.value)
-            for l in s.lines: self.packets.append(l.pack())
+            if (C_SKETCH_IMPLEMENTATION):
+                s = CSketch(self.device_type.value)
+                self.raw.extend(s.convert(
+                    image_path, self.layer_ids[layer].minor, RemarkableId.internal_counter, quality))
+            else:
+                if (len(self.layer_ids) <= layer): return
+                s = Sketch(self, self.layer_ids[layer])
+                s.draw_image(image_path, quality, self.device_type.value)
+                for l in s.lines: self.packets.append(l.pack())
 
     def build(self, lines: List[str], styles: List[int], weights: List[int], images: List[str], quality: int):
         self.build_append_stats(lines)

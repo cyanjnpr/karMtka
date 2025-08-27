@@ -9,6 +9,7 @@ import click
 import io
 from xochitl.xochitl import inject, InjectMode
 import pathlib
+from config import C_SKETCH_IMPLEMENTATION
 
 @click.command()
 @click.option("-t", "--text", "text", default=[""], multiple=True,
@@ -66,7 +67,9 @@ def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int],
     ar = rm_v6.KaitaiStream(io.BytesIO(bytearray(len(page.header) +
         sum(e.len for e in page.packets))))
     page._write(ar)
-    ar = ar.to_byte_array()
+    # to_byte_array doesn't convert to byte array
+    ar: bytearray = bytearray(ar.to_byte_array())
+    if (C_SKETCH_IMPLEMENTATION): ar.extend(page.raw)
 
     if (is_xochitl):
         mode = InjectMode[inject_mode]

@@ -1,0 +1,8 @@
+- module-name: 'sketch'
+  dlls:
+    - from_filenames:
+        relative_path: 'libsketch'
+        prefixes: 
+          - 'libsketch'
+        suffixes:
+          - 'so'

@@ -38,21 +38,10 @@ class Sketch():
             self.draw_point(start_x, y+1, speed, value, direction, pressure)
 
     def draw_image(self, image_path: str, quality: int, device_type):
-        screen_width = device_type.w()
         screen_height = device_type.h()
         with SketchImage(image_path, quality) as img:
             if (img.EOF): return
-            if (float(img.image_file.width) / float(img.image_file.height) > 
-                    float(screen_width) / float(screen_height)):
-                if (img.image_file.width > screen_width):
-                    img.image_file = img.image_file.resize((
-                        screen_width, 
-                        int(img.image_file.height * screen_width / float(img.image_file.width))))
-            else:
-                if (img.image_file.height > screen_height):
-                    img.image_file = img.image_file.resize((
-                        int(screen_width * screen_height / float(img.image_file.height)), 
-                        img.image_file.height))
+            img.fit(device_type.w(), device_type.h())
             origin_x = -img.image_file.width / 2.0
             origin_y = device_type.margin + (screen_height - img.image_file.height) / 2.0
             p = img.next_point(origin_x, origin_y)
