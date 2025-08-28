@@ -73,8 +73,10 @@ def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int],
         piped = sys.stdin.read()
         text = [piped, *text]
 
-    page.build(text, styles, weights, images, quality)
-    ar = bytearray() if is_dry_run else page.serialize()
+    ar: bytearray = bytearray()
+    if (not is_list_mode and not is_dry_run):
+        page.build(text, styles, weights, images, quality)
+        ar = page.serialize()
 
     if (is_xochitl):
         if (is_list_mode): return list_notebooks()
