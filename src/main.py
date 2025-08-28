@@ -4,10 +4,10 @@ import uuid
 from typing import Tuple
 import sys
 import click
-from xochitl.xochitl import inject, InjectMode
+from xochitl.xochitl import inject, InjectMode, list_notebooks
 import pathlib
 
-VERSION = "v0.2.2"
+VERSION = "v0.2.3"
 
 @click.command()
 @click.option("-t", "--text", "text", default=[""], multiple=True,
@@ -40,7 +40,7 @@ current - inject new (overwrite) content into last closed page\n\n\
 next - inject new (overwrite) content into page next to the 'current' one\n\n\
 last - inject new (overwrite) content into last page in last closed notebook",
     type=click.Choice(InjectMode.choices(), case_sensitive=False))
-@click.option("--overwrite", "is_overwrite_set", is_flag=True,
+@click.option("-f", "--overwrite", "is_overwrite_set", is_flag=True,
     help="confirm overwrite operation if such mode is selected")
 @click.option("-g", "--image", "images", default=[], multiple=True,
     help="path to the image file to be injected into the page",
@@ -49,15 +49,24 @@ last - inject new (overwrite) content into last page in last closed notebook",
     help="quality of the injected images, default is '3'\n\n\
 using values higher than the default may result in a huge file size",
     type=click.IntRange(2, 255))
-@click.option("-v", "--version", "print_version", is_flag=True, help="print version")
-@click.option("-d", "--dry", "is_dry_run", is_flag=True, 
+@click.option("--dry", "is_dry_run", is_flag=True, 
     help="prints which notebook and page would be modified on a normal run if used with -x")
+@click.option("-n", "--notebook", "notebook", default="",
+    help="set alternative notebook as injection target instead of the most recent one. \
+This has to be a full path to the notebook, for example:\n\n\
+Notebook named 'notes' in directory 'projects' should be specified as 'projects/notes'")
+@click.option("-l", "--list", "is_list_mode", is_flag=True, help="do not generate anything, list all available notebooks, must be used with -x")
+@click.option("-v", "--version", "print_version", is_flag=True, help="print version of this tool")
 def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int], 
             uid: uuid.UUID, margin: int, device: str, output_to_file: bool, 
             output: str, is_xochitl: bool, inject_mode: str, 
             images: Tuple[str], quality: int, is_overwrite_set: bool, 
-            print_version: bool, is_dry_run: bool):
+            print_version: bool, is_dry_run: bool, notebook: str,
+            is_list_mode: bool):
     if (print_version): return print("karMtka {}".format(VERSION))
+    if (is_dry_run and not is_xochitl): return print("Dry run can be only used with -x option")
+    if (is_list_mode and not is_xochitl): return print("Dry run can be only used with -x option")
+    if (is_dry_run and is_list_mode): return print("conflicting options: --dry and --list")
 
     page = Page(uid, DeviceResolution[device], margin)
     if not sys.stdin.isatty():
@@ -68,9 +77,10 @@ def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int],
     ar = bytearray() if is_dry_run else page.serialize()
 
     if (is_xochitl):
+        if (is_list_mode): return list_notebooks()
         mode = InjectMode[inject_mode]
         if (not mode.is_overwrite_mode() or is_overwrite_set):
-            inject(mode, is_dry_run, ar)
+            inject(notebook, mode, is_dry_run, ar)
         else:
             raise Exception("--overwrite flag is not set, but overwrite mode was selected")
     else:
@@ -85,7 +95,6 @@ def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int],
                 f.write(ar)
         else:
             sys.stdout.buffer.write(ar)
-
 
 if __name__ == "__main__":
     karmtka()

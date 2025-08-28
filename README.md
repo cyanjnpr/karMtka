@@ -43,6 +43,11 @@ There is a risk of damaging existing notebooks while using this tool.
 - `-g, --image` path to the image file to be injected into the page
 - `-q, --quality` quality of the injected images, default is '3'
   - using values higher than the default may result in a huge file size
+- `--dry` dry run, prints which notebook and page would be modified on a normal run, must be used with `-x`
+- `-n, --notebook` set alternative notebook as injection target instead of the most recent one.
+  - This has to be a full path to the notebook, for example: Notebook named 'notes' in directory 'projects' should be specified as 'projects/notes'
+- `-l, --list` do not generate anything, list all available notebooks, must be used with `-x`
+- `-v, --version` print version of this tool
 
 ## Building
 

@@ -85,12 +85,12 @@ class Notebook():
         with open("{}{}.content".format(XOCHITL_PATH, metadata.id), 'r') as f:
             self.raw_content = json.load(f)
             if (is_content_valid(self.raw_content)):
-                self.retreive_pages()
+                self.retrieve_pages()
 
     def is_valid(self):
         return len(self.pages) > 0
 
-    def retreive_pages(self):
+    def retrieve_pages(self):
         for page in self.raw_content["cPages"]["pages"]:
             page_info = PageInfo.from_dict(page)
             if (not page_info.deleted): self.pages.append(page_info)
@@ -138,21 +138,32 @@ def print_target_info(notebook: Notebook, mode: InjectMode):
         print("Page: {}".format(len(notebook.pages)))
     print("Total: {}".format(len(notebook.pages)))
 
-def inject(mode: InjectMode, simulate: bool, page: bytearray):
+def notebook_with_name(recent: List[RecentItem], notebook_name: str) -> Notebook:
+    if len(notebook_name) == 0: return Notebook(recent[0])
+    for item in recent:
+        if item.name == notebook_name: return Notebook(item)
+    return None
+
+def list_notebooks():
+    recent = retrieve_recent_list()
+    for item in recent:
+        print(item.name)
+
+def inject(notebook_name: str, mode: InjectMode, simulate: bool, page: bytearray):
     recent = retrieve_recent_list()
     if (len(recent) == 0): return
-    notebook = Notebook(recent[0])
-    if (not notebook.is_valid()): return
+    notebook = notebook_with_name(recent, notebook_name)
+    if (notebook == None or not notebook.is_valid()): return
     if (mode == InjectMode.APPEND):
         if (simulate): return print_target_info(notebook, mode)
         inject_page(notebook, page)
     elif (mode == InjectMode.CURRENT):
         if (simulate): return print_target_info(notebook, mode)
-        inject_lines(notebook.metadata.id, notebook.pages[notebook.lastOpenedIndex], page)
+        inject_lines(notebook.metadata.id, notebook.pages[notebook.lastOpenedIndex].id, page)
     elif (mode == InjectMode.NEXT):
         if len(notebook.pages) - 1 == notebook.lastOpenedIndex: return
         if (simulate): return print_target_info(notebook, mode)
-        inject_lines(notebook.metadata.id, notebook.pages[notebook.lastOpenedIndex+1], page)
+        inject_lines(notebook.metadata.id, notebook.pages[notebook.lastOpenedIndex+1].id, page)
     elif (mode == InjectMode.LAST):
         if (simulate): return print_target_info(notebook, mode)
-        inject_lines(notebook.metadata.id, notebook.pages[-1], page)
+        inject_lines(notebook.metadata.id, notebook.pages[-1].id, page)
