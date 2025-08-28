@@ -1,15 +1,13 @@
-from kaitai import rm_v6
 from packet import *
 from page import *
-import io
 import uuid
 from typing import Tuple
 import sys
 import click
-import io
 from xochitl.xochitl import inject, InjectMode
 import pathlib
-from config import C_SKETCH_IMPLEMENTATION
+
+VERSION = "v0.2.2"
 
 @click.command()
 @click.option("-t", "--text", "text", default=[""], multiple=True,
@@ -51,30 +49,28 @@ last - inject new (overwrite) content into last page in last closed notebook",
     help="quality of the injected images, default is '3'\n\n\
 using values higher than the default may result in a huge file size",
     type=click.IntRange(2, 255))
+@click.option("-v", "--version", "print_version", is_flag=True, help="print version")
+@click.option("-d", "--dry", "is_dry_run", is_flag=True, 
+    help="prints which notebook and page would be modified on a normal run if used with -x")
 def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int], 
             uid: uuid.UUID, margin: int, device: str, output_to_file: bool, 
             output: str, is_xochitl: bool, inject_mode: str, 
-            images: Tuple[str], quality: int, is_overwrite_set: bool):
-    page = Page(uid, DeviceResolution[device], margin)
+            images: Tuple[str], quality: int, is_overwrite_set: bool, 
+            print_version: bool, is_dry_run: bool):
+    if (print_version): return print("karMtka {}".format(VERSION))
 
+    page = Page(uid, DeviceResolution[device], margin)
     if not sys.stdin.isatty():
         piped = sys.stdin.read()
         text = [piped, *text]
 
     page.build(text, styles, weights, images, quality)
-    page._check()
-
-    ar = rm_v6.KaitaiStream(io.BytesIO(bytearray(len(page.header) +
-        sum(e.len for e in page.packets))))
-    page._write(ar)
-    # to_byte_array doesn't convert to byte array
-    ar: bytearray = bytearray(ar.to_byte_array())
-    if (C_SKETCH_IMPLEMENTATION): ar.extend(page.raw)
+    ar = bytearray() if is_dry_run else page.serialize()
 
     if (is_xochitl):
         mode = InjectMode[inject_mode]
         if (not mode.is_overwrite_mode() or is_overwrite_set):
-            inject(mode, ar)
+            inject(mode, is_dry_run, ar)
         else:
             raise Exception("--overwrite flag is not set, but overwrite mode was selected")
     else:

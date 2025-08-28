@@ -1,7 +1,8 @@
 import json
 import uuid
 from enum import Enum
-from .recent import retrieve_recent_list
+from typing import Dict, List
+from .recent import retrieve_recent_list, RecentItem
 from . import XOCHITL_PATH
 
 class InjectMode(Enum):
@@ -29,6 +30,9 @@ class PageInfo:
     
     def set_template(self, template_name: str):
         self.template_name = template_name
+
+    def __repr__(self):
+        return self.idx
 
     def to_dict(self):
         return {
@@ -59,33 +63,54 @@ class PageInfo:
             deleted = info["deleted"]["value"] > 0
         return PageInfo(id, idx, template, deleted)
 
-def retrieve_content_info(document_id: str):
-    with open("{}{}.content".format(XOCHITL_PATH, document_id), 'r') as f:
-        content = json.load(f)
-        return content
-    
-def is_content_valid(content):
+
+def is_content_valid(content: Dict):
     return ("pageCount" in content and
             content["pageCount"] > 0 and
             "cPages" in content and
             "pages" in content["cPages"] and
             "lastOpened" in content["cPages"] and 
             "value" in content["cPages"]["lastOpened"])
-    
-def find_newest_idx(content):
-    idx = "b"
-    for page in content["cPages"]["pages"]:
-        if page["idx"]["value"] > idx:
-            idx = page["idx"]["value"]
-    return idx
 
-def next_idx(idx: str):
-    idx = idx.lower()
-    for i in range(len(idx) - 1, -1, -1):
-        if idx[i] < 'z':
-            idx = idx[:i] + chr(ord(idx[i]) + 1) + ('a' * (len(idx) - i - 1))
-            return idx
-    return idx + 'a'
+class Notebook():
+
+    metadata: RecentItem
+    pages: List[PageInfo]
+    lastOpenedIndex: int
+    raw_content: Dict
+
+    def __init__(self, metadata: RecentItem):
+        self.metadata = metadata
+        self.pages = []
+        with open("{}{}.content".format(XOCHITL_PATH, metadata.id), 'r') as f:
+            self.raw_content = json.load(f)
+            if (is_content_valid(self.raw_content)):
+                self.retreive_pages()
+
+    def is_valid(self):
+        return len(self.pages) > 0
+
+    def retreive_pages(self):
+        for page in self.raw_content["cPages"]["pages"]:
+            page_info = PageInfo.from_dict(page)
+            if (not page_info.deleted): self.pages.append(page_info)
+            if (self.raw_content["cPages"]["lastOpened"]["value"] == page_info.id):
+                self.lastOpenedIndex = len(self.pages) - 1
+        sorted(self.pages, key=lambda p: p.idx)
+
+    def next_idx(self) -> str:
+        idx = self.pages[-1].idx.lower()
+        for i in range(len(idx) - 1, -1, -1):
+            if idx[i] < 'z':
+                idx = idx[:i] + chr(ord(idx[i]) + 1) + ('a' * (len(idx) - i - 1))
+                return idx
+        return idx + 'a'
+    
+    def new_page(self):
+        self.raw_content["pageCount"] += 1
+        self.pages.append(PageInfo(uuid.uuid4(), self.next_idx()))
+        self.raw_content["cPages"]["pages"].append(self.pages[-1].to_dict())
+    
 
 def inject_content_info(document_id: str, content):
     with open("{}{}.content".format(XOCHITL_PATH, document_id), 'w') as f:
@@ -94,44 +119,40 @@ def inject_content_info(document_id: str, content):
 def inject_lines(document_id: str, uid: str, page: bytearray):
     with open("{}{}/{}.rm".format(XOCHITL_PATH, document_id, uid), 'wb') as f:
         f.write(page)
+        
+def inject_page(notebook: Notebook, page: bytearray):
+    notebook.new_page()
+    inject_lines(notebook.metadata.id, notebook.pages[-1].id, page)
+    inject_content_info(notebook.metadata.id, notebook.raw_content)
 
-def inject_page(document_id: str, page: bytearray):
-    content = retrieve_content_info(document_id)
-    if (not is_content_valid(content)): return
-    idx = next_idx(find_newest_idx(content))
-    page_info = PageInfo(str(uuid.uuid4()), idx)
-    content["pageCount"] = content["pageCount"] + 1
-    content["cPages"]["pages"].append(page_info.to_dict())
-    inject_lines(document_id, page_info.id, page)
-    inject_content_info(document_id, content)
+def print_target_info(notebook: Notebook, mode: InjectMode):
+    print("Notebook: {}".format(notebook.metadata.name))
+    if (mode == InjectMode.APPEND):
+        notebook.new_page()
+        print("Page: {}".format(len(notebook.pages)))
+    elif (mode == InjectMode.CURRENT):
+        print("Page: {}".format(notebook.lastOpenedIndex + 1))
+    elif (mode == InjectMode.NEXT):
+        print("Page: {}".format(notebook.lastOpenedIndex + 2))
+    elif (mode == InjectMode.LAST):
+        print("Page: {}".format(len(notebook.pages)))
+    print("Total: {}".format(len(notebook.pages)))
 
-def inject(mode: InjectMode, page: bytearray):
+def inject(mode: InjectMode, simulate: bool, page: bytearray):
     recent = retrieve_recent_list()
     if (len(recent) == 0): return
+    notebook = Notebook(recent[0])
+    if (not notebook.is_valid()): return
     if (mode == InjectMode.APPEND):
-        inject_page(recent[0].id, page)
+        if (simulate): return print_target_info(notebook, mode)
+        inject_page(notebook, page)
     elif (mode == InjectMode.CURRENT):
-        content = retrieve_content_info(recent[0].id)
-        if (not is_content_valid(content)): return
-        inject_lines(recent[0].id, content["cPages"]["lastOpened"]["value"], page)
+        if (simulate): return print_target_info(notebook, mode)
+        inject_lines(notebook.metadata.id, notebook.pages[notebook.lastOpenedIndex], page)
     elif (mode == InjectMode.NEXT):
-        content = retrieve_content_info(recent[0].id)
-        if (not is_content_valid(content)): return
-        next = False
-        pages = sorted(content["cPages"]["pages"], key=lambda p: PageInfo.from_dict(p).idx)
-        for page_info in pages:
-            info = PageInfo.from_dict(page_info)
-            if (next and not info.deleted):
-                inject_lines(recent[0].id, info.id, page)
-                break
-            if (info.id == content["cPages"]["lastOpened"]["value"]):
-                next = True
+        if len(notebook.pages) - 1 == notebook.lastOpenedIndex: return
+        if (simulate): return print_target_info(notebook, mode)
+        inject_lines(notebook.metadata.id, notebook.pages[notebook.lastOpenedIndex+1], page)
     elif (mode == InjectMode.LAST):
-        content = retrieve_content_info(recent[0].id)
-        if (not is_content_valid(content)): return
-        pages = sorted(content["cPages"]["pages"], key=lambda p: PageInfo.from_dict(p).idx, reverse=True)
-        for page_info in pages:
-            info = PageInfo.from_dict(page_info)
-            if (not info.deleted):
-                inject_lines(recent[0].id, info.id, page)
-                break
+        if (simulate): return print_target_info(notebook, mode)
+        inject_lines(notebook.metadata.id, notebook.pages[-1], page)

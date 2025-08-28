@@ -3,7 +3,7 @@
 
 if [  -z "$C_SKETCH_IMPLEMENTATION" ] || [ "$C_SKETCH_IMPLEMENTATION" = "1" ]; then
     (cd src/sketch/libsketch && make -B)
-    echo -e "\nC_SKETCH_IMPLEMENTATION=1" | tee -a src/config.py
+    echo "C_SKETCH_IMPLEMENTATION=1" > src/config.py
 
     python3 -m poetry env use python3
     eval $(python3 -m poetry env activate)
@@ -14,7 +14,7 @@ if [  -z "$C_SKETCH_IMPLEMENTATION" ] || [ "$C_SKETCH_IMPLEMENTATION" = "1" ]; t
     python3 -m nuitka --user-package-configuration-file=karmtka.nuitka-package.config.yml --remove-output \
         --deployment --mode=onefile --output-filename=karmtka_$(uname -m) src/main.py
 else
-    echo -e "\nC_SKETCH_IMPLEMENTATION=0" | tee -a src/config.py
+    echo "C_SKETCH_IMPLEMENTATION=0" > src/config.py
 
     python3 -m poetry env use python3
     eval $(python3 -m poetry env activate)
