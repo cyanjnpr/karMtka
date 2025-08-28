@@ -1,6 +1,6 @@
 [project]
 name = "karmtka"
-version = "0.2.2"
+version = "0.2.3"
 description = "command line tool for generating simple reMarkable pages"
 authors = [ 
     { name = "cyanjnpr" },

@@ -3,6 +3,7 @@ import uuid
 from typing import List
 from .resolution import DeviceResolution
 from packet import *
+import io
 from config import C_SKETCH_IMPLEMENTATION
 if (C_SKETCH_IMPLEMENTATION):
     from sketch import CSketch
@@ -43,6 +44,16 @@ class Page(rm_v6.RmV6):
             self.nodes.append(TreeNodePacket(self, "Layer {}".format(layer), layer_id, layer_timestamp))
             self.moves.append(TreeMovePacket(self, root_id, layer_id))
             self.groups.append(GroupItemPacket(self, root_id, layer_id))
+
+    def serialize(self) -> bytearray:
+        self._check()
+        ar = rm_v6.KaitaiStream(io.BytesIO(bytearray(len(self.header) +
+            sum(e.len for e in self.packets))))
+        self._write(ar)
+        # to_byte_array doesn't convert to byte array
+        ar: bytearray = bytearray(ar.to_byte_array())
+        if (C_SKETCH_IMPLEMENTATION): ar.extend(self.raw)
+        return ar
 
     def build_append_lines(self, images: List[str], quality: int):
         for layer, image_path in enumerate(images):
