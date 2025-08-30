@@ -136,6 +136,7 @@ def print_target_info(notebook: Notebook, mode: InjectMode):
         print("Page: {}".format(notebook.lastOpenedIndex + 2))
     elif (mode == InjectMode.LAST):
         print("Page: {}".format(len(notebook.pages)))
+    print("Overwrite: {}".format(mode.is_overwrite_mode()))
     print("Total: {}".format(len(notebook.pages)))
 
 def notebook_with_name(recent: List[RecentItem], notebook_name: str) -> Notebook:
@@ -144,9 +145,10 @@ def notebook_with_name(recent: List[RecentItem], notebook_name: str) -> Notebook
         if item.name == notebook_name: return Notebook(item)
     return None
 
-def list_notebooks():
+def list_notebooks(upper_bound: int):
     recent = retrieve_recent_list()
-    for item in recent:
+    for i, item in enumerate(recent):
+        if (i >= upper_bound): break
         print(item.name)
 
 def inject(notebook_name: str, mode: InjectMode, simulate: bool, page: bytearray):

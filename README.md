@@ -36,9 +36,9 @@ There is a risk of damaging existing notebooks while using this tool.
   - this mode will inject generated page into an existing notebook
 - `-i, --inject` inject mode for the xochitl option, default is 'append'
   - append - inject new page into last closed notebook
-  - current - inject new (overwrite) content into last closed page
-  - next - inject new (overwrite) content into page next to the 'current' one
-  - last - inject new (overwrite) content into last page in last closed notebook
+  - current - inject new content (overwrite) into last closed page
+  - next - inject new content (overwrite) into page next to the 'current' one
+  - last - inject new content (overwrite) into last page in last closed notebook
 - `--overwrite` confirm overwrite operation if such mode is selected
 - `-g, --image` path to the image file to be injected into the page
 - `-q, --quality` quality of the injected images, default is '3'
@@ -46,7 +46,7 @@ There is a risk of damaging existing notebooks while using this tool.
 - `--dry` dry run, prints which notebook and page would be modified on a normal run, must be used with `-x`
 - `-n, --notebook` set alternative notebook as injection target instead of the most recent one.
   - This has to be a full path to the notebook, for example: Notebook named 'notes' in directory 'projects' should be specified as 'projects/notes'
-- `-l, --list` do not generate anything, list all available notebooks, must be used with `-x`
+- `-l, --list` do not generate anything, list the most recent notebooks, must be used with `-x`
 - `-v, --version` print version of this tool
 
 ## Building
