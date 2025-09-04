@@ -13,7 +13,7 @@ class Resolution():
         self.margin = 0
 
     def with_margin(self, margin: int):
-        self.margin = margin
+        self.margin = min(margin, self.width / 2)
         return self
 
     def w(self):
@@ -30,11 +30,17 @@ class Resolution():
     def rMPP():
         return Resolution(2160, 1620)
     
+    @staticmethod
+    def rMPPM():
+        return Resolution(1696, 954)
+    
 
 class DeviceResolution(Enum):
     RM = Resolution.rM()
     RMPP = Resolution.rMPP()
+    RMPPM = Resolution.rMPPM()
 
     @staticmethod
     def choices():
-        return [DeviceResolution.RM.name, DeviceResolution.RMPP.name]
+        return [DeviceResolution.RM.name, DeviceResolution.RMPP.name,
+                DeviceResolution.RMPPM.name]

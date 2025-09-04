@@ -16,4 +16,4 @@ services:
     volumes:
       - .:/build
     working_dir: /build
-    profiles: [rmpp]
+    profiles: [rmpp, rmppm]

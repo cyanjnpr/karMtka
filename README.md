@@ -76,7 +76,7 @@ To compile repo to binary standalone for your device run `docker compose` with m
 # compile for reMarkable 1 & 2
 docker compose --profile rm up
 
-# compile for reMarkable Paper Pro
+# compile for reMarkable Paper Pro & reMarkable Paper Pro Move
 docker compose --profile rmpp up
 ```
 This process may take a while.
