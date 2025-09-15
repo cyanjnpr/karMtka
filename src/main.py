@@ -5,6 +5,7 @@ from typing import Tuple
 import sys
 import click
 from xochitl.xochitl import inject, InjectMode, list_notebooks
+from sketch import ImageConversion
 import pathlib
 
 VERSION = "v0.2.3"
@@ -45,7 +46,12 @@ last - inject new content (overwrite) into last page in last closed notebook",
 @click.option("-g", "--image", "images", default=[], multiple=True,
     help="path to the image file to be injected into the page",
     type=click.Path(exists=True, dir_okay=False))
-@click.option("-q", "--quality", "quality", default=3,
+@click.option("-G", "--conversion-method", "conversion_method", default=[ImageConversion.NAIVE.name], multiple=True,
+    help="conversion method for the provided image, default is 'naive'\n\n\
+naive - conver line by line, placing new point whenever color changes\n\n\
+potrace - trace outlines with potrace",
+    type=click.Choice(ImageConversion.choices(), case_sensitive=False))
+@click.option("-q", "--quality", "quality", default=[3], multiple=True,
     help="quality of the injected images, default is '3'\n\n\
 using values higher than the default may result in a huge file size",
     type=click.IntRange(2, 255))
@@ -60,9 +66,9 @@ Notebook named 'notes' in directory 'projects' should be specified as 'projects/
 def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int], 
             uid: uuid.UUID, margin: int, device: str, output_to_file: bool, 
             output: str, is_xochitl: bool, inject_mode: str, 
-            images: Tuple[str], quality: int, is_overwrite_set: bool, 
+            images: Tuple[str], quality: Tuple[int], is_overwrite_set: bool, 
             print_version: bool, is_dry_run: bool, notebook: str,
-            is_list_mode: bool):
+            is_list_mode: bool, conversion_method: Tuple[str]):
     if (print_version): return print("karMtka {}".format(VERSION))
     if (is_dry_run and not is_xochitl): return print("dry run can be only used with -x option", file=sys.stderr)
     if (is_list_mode and not is_xochitl): return print("list mode can be only used with -x option", file=sys.stderr)
@@ -75,7 +81,7 @@ def karmtka(text: Tuple[str], styles: Tuple[int], weights: Tuple[int],
 
     ar: bytearray = bytearray()
     if (not is_list_mode and not is_dry_run):
-        page.build(text, styles, weights, images, quality)
+        page.build(text, styles, weights, images, quality, conversion_method)
         ar = page.serialize()
 
     if (is_xochitl):

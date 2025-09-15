@@ -13,7 +13,7 @@ class Resolution():
         self.margin = 0
 
     def with_margin(self, margin: int):
-        self.margin = min(margin, self.width / 2)
+        self.margin = margin
         return self
 
     def w(self):

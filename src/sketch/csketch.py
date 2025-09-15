@@ -2,6 +2,8 @@ import ctypes
 import os
 import sys
 from typing import Tuple
+from packet import RemarkableId
+from .conversion import ImageConversion
 
 if getattr(sys, "frozen", False):
     lib_path = os.path.join(os.path.dirname(sys.executable), "sketch", "libsketch")
@@ -11,6 +13,7 @@ libsketch = ctypes.cdll.LoadLibrary(lib_path)
 
 POINT_SIZE = 14
 
+# implementation in C
 class CSketch():
     buf: ctypes.Array[ctypes.c_char]
     
@@ -19,15 +22,48 @@ class CSketch():
         # ensure buffer is large enough for the worst case
         # worst case scenario for rM2 is buff of size 35MB
         self.buf = ctypes.create_string_buffer(device_type.w() * device_type.h() * POINT_SIZE)
-        libsketch.convert.argtypes = [ctypes.c_char_p, ctypes.c_int, ctypes.c_int,
-                                      ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_int),
-                                      ctypes.c_int, ctypes.POINTER(type(self.buf))]
-        libsketch.convert.restype = ctypes.c_size_t
+        libsketch.convert_potrace.argtypes = [ctypes.c_char_p, # filename
+            ctypes.c_int, # page width
+            ctypes.c_int, # page height
+            ctypes.c_int, # page margin
+            ctypes.c_int, # layer id major
+            ctypes.c_int, # layer id minor
+            ctypes.c_int, # threshold
+            ctypes.POINTER(ctypes.c_int), # id counter
+            ctypes.POINTER(type(self.buf)) # buf
+            ]
+        libsketch.convert_potrace.restype = ctypes.c_size_t
+        libsketch.convert_naive.argtypes = [ctypes.c_char_p, # filename
+            ctypes.c_int, # page width
+            ctypes.c_int, # page height
+            ctypes.c_int, # page margin
+            ctypes.c_int, # layer id major
+            ctypes.c_int, # layer id minor
+            ctypes.c_int, # shades
+            ctypes.POINTER(ctypes.c_int), # id counter
+            ctypes.POINTER(type(self.buf)) # buf
+            ]
+        libsketch.convert_naive.restype = ctypes.c_size_t
 
-    def convert(self, filename: str, layer_id: int, id_cnt: int, shades: int) -> Tuple[int, bytes]:
+    def convert(self, filename: str, layer_id: RemarkableId, id_cnt: int, q: int, conversion: str) -> Tuple[int, bytes]:
+        if conversion == ImageConversion.NAIVE.name:
+            return self.convert_naive(filename, layer_id, id_cnt, q)
+        elif conversion == ImageConversion.POTRACE.name:
+            return self.convert_potrace(filename, layer_id, id_cnt, q)
+    
+    def convert_naive(self, filename: str, layer_id: RemarkableId, id_cnt: int, shades: int):
         counter = ctypes.c_int(id_cnt)
-        size = libsketch.convert(filename.encode(), self.device_type.w(), self.device_type.h(), 
-            self.device_type.margin, layer_id, ctypes.byref(counter), shades, ctypes.byref(self.buf))
+        size = libsketch.convert_naive(
+            filename.encode(), self.device_type.w(), self.device_type.h(), 
+            self.device_type.margin, layer_id.major, layer_id.minor, 
+            shades, ctypes.byref(counter), ctypes.byref(self.buf))
         return counter.value.real, self.buf[:size]
 
+    def convert_potrace(self, filename: str, layer_id: RemarkableId, id_cnt: int, threshold: int):
+        counter = ctypes.c_int(id_cnt)
+        size = libsketch.convert_potrace(
+            filename.encode(), self.device_type.w(), self.device_type.h(), 
+            self.device_type.margin, layer_id.major, layer_id.minor, 
+            threshold, ctypes.byref(counter), ctypes.byref(self.buf))
+        return counter.value.real, self.buf[:size]
 
