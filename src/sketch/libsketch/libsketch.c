@@ -288,12 +288,13 @@ size_t convert_potrace(char* filename, int page_width,
         while (current_path != NULL) {
             Point* points = NULL;
             potrace_curve_t current_curve = current_path->curve;
-            // smaller lines are more often details, right?
-            int line_width = 1 + ceil(log10(current_path->area));
+            // try to mimic real drawings
+            // details (small area) are drawn with strokes that are smaller
+            int line_width = 1 + floor(log10(current_path->area));
             for (int i = 0; i < current_curve.n; i++) {
                 potrace_dpoint_t start = current_curve.c[i ? i-1 : current_curve.n-1][2];
                 potrace_dpoint_t end = current_curve.c[i][2];
-                arrpush(points, new_point_with_width(translate_x, translate_y, start.x, start.y, line_width));
+                // arrpush(points, new_point_with_width(translate_x, translate_y, start.x, start.y, line_width));
                 if (current_curve.tag[i] == POTRACE_CORNER) {
                     arrpush(points, new_point_with_width(translate_x, translate_y, current_curve.c[i][1].x, current_curve.c[i][1].y, line_width));
                 } else if (current_curve.tag[i] == POTRACE_CURVETO) { // bezier

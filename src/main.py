@@ -8,7 +8,7 @@ from xochitl.xochitl import inject, InjectMode, list_notebooks
 from sketch import ImageConversion
 import pathlib
 
-VERSION = "v0.2.3"
+VERSION = "v0.2.4"
 
 @click.command()
 @click.option("-t", "--text", "text", default=[""], multiple=True,

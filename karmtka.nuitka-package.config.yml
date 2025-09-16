@@ -9,4 +9,5 @@
   anti-bloat:
     - no-follow:
         'PIL': 'ignore'
+        'potrace': 'ignore'
 

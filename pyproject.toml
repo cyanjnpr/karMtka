@@ -1,6 +1,6 @@
 [project]
 name = "karmtka"
-version = "0.2.3"
+version = "0.2.4"
 description = "command line tool for generating simple reMarkable pages"
 authors = [ 
     { name = "cyanjnpr" },
@@ -15,9 +15,10 @@ click = "^8.1.7"
 kaitaistruct = { git = "https://github.com/kaitai-io/kaitai_struct_python_runtime.git", branch = "serialization" }
 
 pillow = { version = "^11.3.0", optional = true }
+potracer = { version = "^0.0.4", optional = true }
 
 [tool.poetry.extras]
-sketch = ["pillow"]
+sketch = ["pillow", "potracer"]
 
 [tool.poetry]
 package-mode = false

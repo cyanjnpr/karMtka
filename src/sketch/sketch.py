@@ -11,7 +11,8 @@ class Sketch():
     parent: rm_v6.ReadWriteKaitaiStruct
     lines: List[LinePacket]
 
-    def __init__(self, parent: rm_v6.ReadWriteKaitaiStruct, layer_id: RemarkableId):
+    def __init__(self, parent: rm_v6.ReadWriteKaitaiStruct, layer_id: RemarkableId, device_type):
+        self.device_type = device_type
         self.layer = layer_id
         self.parent = parent
         self.lines = [
@@ -22,10 +23,10 @@ class Sketch():
         return self.lines[len(self.lines) - 1]
 
     def draw_point(self, x: float ,y: float, 
-        speed: float, width: float, direction: float, pressure: float):
-        if self.current_line().num_points() > POINTS_CAP:
-            self.lines.append(LinePacket(self.parent, self.layer))
+        speed: float, width: float, direction: float, pressure: float, is_last: bool = False):
         self.current_line().new_point(x, y, speed, width, direction, pressure)
+        if self.current_line().num_points() > POINTS_CAP or is_last:
+            self.lines.append(LinePacket(self.parent, self.layer))
 
     # for testing parameters and how they change displayed line
     def rectangle(self, start_x, start_y, width, height):
@@ -37,13 +38,13 @@ class Sketch():
             self.draw_point(start_x + width, y+1, speed, value, direction, pressure)
             self.draw_point(start_x, y+1, speed, value, direction, pressure)
 
-    def draw_image(self, image_path: str, quality: int, device_type):
-        screen_height = device_type.h()
-        with SketchImage(image_path, quality) as img:
+    def draw_image(self, image_path: str, quality: int, conversion_method: str):
+        screen_height = self.device_type.h()
+        with SketchImage(image_path, quality, conversion_method) as img:
             if (img.EOF): return
-            img.fit(device_type.w(), device_type.h())
+            img.fit(self.device_type.w(), self.device_type.h())
             origin_x = -img.image_file.width / 2.0
-            origin_y = device_type.margin + (screen_height - img.image_file.height) / 2.0
+            origin_y = self.device_type.margin + (screen_height - img.image_file.height) / 2.0
             p = img.next_point(origin_x, origin_y)
             while (not img.EOF):
                 self.draw_point(*p)

@@ -25,6 +25,8 @@ class Page(rm_v6.RmV6):
             UuidPacket(self, uid).pack(),
             MigrationPacket(self).pack()
         ]
+        # part of the serializer is written in C, because python is too slow
+        # this part is added as raw bytearray to the part serialized by kaitai
         self.raw = bytearray()
 
     def build_append_stats(self, lines: List[str]):
@@ -65,8 +67,9 @@ class Page(rm_v6.RmV6):
                 self.raw.extend(raw)
             else:
                 if (len(self.layer_ids) <= layer): return
-                s = Sketch(self, self.layer_ids[layer])
-                s.draw_image(image_path, quality[min(len(quality)-1, layer)], self.device_type.value)
+                s = Sketch(self, self.layer_ids[layer], self.device_type.value)
+                s.draw_image(image_path, quality[min(len(quality)-1, layer)], 
+                    conversion_method[min(len(conversion_method)-1, layer)])
                 for l in s.lines: self.packets.append(l.pack())
 
     def build(self, lines: List[str], styles: List[int], weights: List[int], images: List[str], quality: List[int], conversion_method: List[str]):
