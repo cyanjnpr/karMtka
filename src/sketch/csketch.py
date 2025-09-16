@@ -17,8 +17,9 @@ POINT_SIZE = 14
 class CSketch():
     buf: ctypes.Array[ctypes.c_char]
     
-    def __init__(self, device_type):
+    def __init__(self, layer_id: RemarkableId, device_type):
         self.device_type = device_type
+        self.layer_id = layer_id
         # ensure buffer is large enough for the worst case
         # worst case scenario for rM2 is buff of size 35MB
         self.buf = ctypes.create_string_buffer(device_type.w() * device_type.h() * POINT_SIZE)
@@ -45,25 +46,25 @@ class CSketch():
             ]
         libsketch.convert_naive.restype = ctypes.c_size_t
 
-    def convert(self, filename: str, layer_id: RemarkableId, id_cnt: int, q: int, conversion: str) -> Tuple[int, bytes]:
+    def convert(self,  id_cnt: int, filename: str, q: int, conversion: str) -> Tuple[int, bytes]:
         if conversion == ImageConversion.NAIVE.name:
-            return self.convert_naive(filename, layer_id, id_cnt, q)
+            return self.convert_naive(id_cnt, filename, q)
         elif conversion == ImageConversion.POTRACE.name:
-            return self.convert_potrace(filename, layer_id, id_cnt, q)
+            return self.convert_potrace(id_cnt, filename, q)
     
-    def convert_naive(self, filename: str, layer_id: RemarkableId, id_cnt: int, shades: int):
+    def convert_naive(self, id_cnt: int, filename: str, shades: int):
         counter = ctypes.c_int(id_cnt)
         size = libsketch.convert_naive(
             filename.encode(), self.device_type.w(), self.device_type.h(), 
-            self.device_type.margin, layer_id.major, layer_id.minor, 
+            self.device_type.margin, self.layer_id.major, self.layer_id.minor, 
             shades, ctypes.byref(counter), ctypes.byref(self.buf))
         return counter.value.real, self.buf[:size]
 
-    def convert_potrace(self, filename: str, layer_id: RemarkableId, id_cnt: int, threshold: int):
+    def convert_potrace(self, id_cnt: int, filename: str, threshold: int):
         counter = ctypes.c_int(id_cnt)
         size = libsketch.convert_potrace(
             filename.encode(), self.device_type.w(), self.device_type.h(), 
-            self.device_type.margin, layer_id.major, layer_id.minor, 
+            self.device_type.margin, self.layer_id.major, self.layer_id.minor, 
             threshold, ctypes.byref(counter), ctypes.byref(self.buf))
         return counter.value.real, self.buf[:size]
 

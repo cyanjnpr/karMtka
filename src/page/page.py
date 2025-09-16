@@ -60,9 +60,9 @@ class Page(rm_v6.RmV6):
     def build_append_lines(self, images: List[str], quality: List[int], conversion_method: List[str]):
         for layer, image_path in enumerate(images):
             if (C_SKETCH_IMPLEMENTATION):
-                s = CSketch(self.device_type.value)
-                RemarkableId.internal_counter, raw = s.convert(
-                    image_path, self.layer_ids[layer], RemarkableId.internal_counter, quality[min(len(quality)-1, layer)],
+                s = CSketch(self.layer_ids[layer], self.device_type.value)
+                RemarkableId.internal_counter, raw = s.convert(RemarkableId.internal_counter,
+                    image_path, quality[min(len(quality)-1, layer)],
                         conversion_method[min(len(conversion_method)-1, layer)])
                 self.raw.extend(raw)
             else:

@@ -48,12 +48,12 @@ last - inject new content (overwrite) into last page in last closed notebook",
     type=click.Path(exists=True, dir_okay=False))
 @click.option("-G", "--conversion-method", "conversion_method", default=[ImageConversion.NAIVE.name], multiple=True,
     help="conversion method for the provided image, default is 'naive'\n\n\
-naive - conver line by line, placing new point whenever color changes\n\n\
+naive - convert line by line, placing new point whenever color changes\n\n\
 potrace - trace outlines with potrace",
     type=click.Choice(ImageConversion.choices(), case_sensitive=False))
-@click.option("-q", "--quality", "quality", default=[3], multiple=True,
-    help="quality of the injected images, default is '3'\n\n\
-using values higher than the default may result in a huge file size",
+@click.option("-q", "--quality", "--threshold", "quality", default=[3], multiple=True,
+    help="quality/threshold parameter for the injected images, default is '3'\n\n\
+naive conversion - using values higher than the default may result in a huge file size",
     type=click.IntRange(2, 255))
 @click.option("--dry", "is_dry_run", is_flag=True, 
     help="prints which notebook and page would be modified on a normal run if used with -x")

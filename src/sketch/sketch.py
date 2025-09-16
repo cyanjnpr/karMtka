@@ -40,9 +40,8 @@ class Sketch():
 
     def draw_image(self, image_path: str, quality: int, conversion_method: str):
         screen_height = self.device_type.h()
-        with SketchImage(image_path, quality, conversion_method) as img:
+        with SketchImage(image_path, quality, conversion_method, self.device_type.w(), self.device_type.h()) as img:
             if (img.EOF): return
-            img.fit(self.device_type.w(), self.device_type.h())
             origin_x = -img.image_file.width / 2.0
             origin_y = self.device_type.margin + (screen_height - img.image_file.height) / 2.0
             p = img.next_point(origin_x, origin_y)

@@ -25,8 +25,10 @@ class SketchImage():
     saved_segment: List
     is_saved_segment_last: bool
     saved_segment_start: Point
+    screen_width: int
+    screen_height: int
 
-    def __init__(self, path: str, shades: int, conversion_method: str):
+    def __init__(self, path: str, shades: int, conversion_method: str, screen_width: int, screen_height: int):
         self.image_path = path
         self.shades = shades
         self.conversion_method = conversion_method
@@ -37,6 +39,8 @@ class SketchImage():
         self.saved_segment = []
         self.is_saved_segment_last = False
         self.EOF = False
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
     def __enter__(self):
         self.left_to_right = True
@@ -47,6 +51,7 @@ class SketchImage():
         self.image_file = None
         try:
             self.image_file = Image.open(self.image_path).convert('LA')
+            self.fit_image()
             self.saved_pixel = self.next_pixel()
             if (self.conversion_method == ImageConversion.POTRACE.name):
                 potrace_bitmap = Bitmap(self.image_file, self.shades / 255.0)
@@ -64,18 +69,18 @@ class SketchImage():
         self.EOF = True
         if (self.image_file != None): self.image_file.close()
 
-    def fit(self, screen_width: int, screen_height: int):
+    def fit_image(self):
         if (float(self.image_file.width) / float(self.image_file.height) > 
-                float(screen_width) / float(screen_height)):
-            if (self.image_file.width > screen_width):
+                float(self.screen_width) / float(self.screen_height)):
+            if (self.image_file.width > self.screen_width):
                 self.image_file = self.image_file.resize((
-                    screen_width, 
-                    int(self.image_file.height * screen_width / float(self.image_file.width))))
+                    self.screen_width, 
+                    int(self.image_file.height * self.screen_width / float(self.image_file.width))))
         else:
-            if (self.image_file.height > screen_height):
+            if (self.image_file.height > self.screen_height):
                 self.image_file = self.image_file.resize((
-                    int(self.image_file.width * screen_height / float(self.image_file.height)), 
-                    screen_height))
+                    int(self.image_file.width * self.screen_height / float(self.image_file.height)), 
+                    self.screen_height))
 
     def value_to_shade(self, val: float) -> int:
         return math.floor(val / 256 * self.shades)
@@ -137,8 +142,6 @@ class SketchImage():
             self.potrace_path.curves.pop(0)
             if (len(self.potrace_path.curves) == 0):
                 self.EOF = True
-            # else:
-            #     self.saved_segment_start = self.potrace_path.curves[0].start_point
         if seg.is_corner:
             self.saved_segment = [seg.c]
         else:

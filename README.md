@@ -41,8 +41,11 @@ There is a risk of damaging existing notebooks while using this tool.
   - last - inject new content (overwrite) into last page in last closed notebook
 - `--overwrite` confirm overwrite operation if such mode is selected
 - `-g, --image` path to the image file to be injected into the page
-- `-q, --quality` quality of the injected images, default is '3'
-  - using values higher than the default may result in a huge file size
+- `-G, --conversion-method` conversion method for the provided image, default is 'naive'
+  - naive - convert line by line, placing new point whenever color changes\n\n\
+  - potrace - trace outlines with potrace
+- `-q, --quality, --threshold` quality/threshold parameter for the injected images, default is '3'
+  - naive conversion - using values higher than the default may result in a huge file size
 - `--dry` dry run, prints which notebook and page would be modified on a normal run, must be used with `-x`
 - `-n, --notebook` set alternative notebook as injection target instead of the most recent one.
   - This has to be a full path to the notebook, for example: Notebook named 'notes' in directory 'projects' should be specified as 'projects/notes'
