@@ -6,7 +6,7 @@ from packet import RemarkableId
 from .conversion import ImageConversion
 
 if getattr(sys, "frozen", False):
-    lib_path = os.path.join(os.path.dirname(sys.executable), "sketch", "libsketch")
+    lib_path = os.path.join(os.path.dirname(sys.executable), "sketch", "libsketch", "libsketch.so")
 else:
     lib_path = os.path.join(os.path.dirname(__file__), "libsketch", "libsketch.so")
 libsketch = ctypes.cdll.LoadLibrary(lib_path)

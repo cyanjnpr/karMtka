@@ -6,6 +6,11 @@
           - 'libsketch'
         suffixes:
           - 'so'
+    - from_filenames:
+        relative_path: 'libsketch'
+        prefixes:
+          - 'libpotrace'
+      dest_path: '.'
   anti-bloat:
     - no-follow:
         'PIL': 'ignore'

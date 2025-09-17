@@ -42,7 +42,7 @@ There is a risk of damaging existing notebooks while using this tool.
 - `--overwrite` confirm overwrite operation if such mode is selected
 - `-g, --image` path to the image file to be injected into the page
 - `-G, --conversion-method` conversion method for the provided image, default is 'naive'
-  - naive - convert line by line, placing new point whenever color changes\n\n\
+  - naive - convert line by line, placing new point whenever color changes
   - potrace - trace outlines with potrace
 - `-q, --quality, --threshold` quality/threshold parameter for the injected images, default is '3'
   - naive conversion - using values higher than the default may result in a huge file size
