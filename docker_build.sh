@@ -1,8 +1,13 @@
 #!/bin/bash
-# this is a container entrypoint
+# container entrypoint
 
+# assume yes by default
 if [  -z "$C_SKETCH_IMPLEMENTATION" ] || [ "$C_SKETCH_IMPLEMENTATION" = "1" ]; then
     (cd src/sketch/libsketch && make -B)
+    # this is probably not the way to do it, but neither toltec nor entware have libpotrace
+    [ "$(uname -m)" = "armv7l" ] && cp -L /usr/lib/arm-linux-gnueabihf/libpotrace.so.0 src/sketch/libsketch/
+    [ "$(uname -m)" = "aarch64" ] && cp -L /usr/lib/aarch64-linux-gnu/libpotrace.so.0 src/sketch/libsketch/
+
     echo "C_SKETCH_IMPLEMENTATION=1" > src/config.py
 
     python3 -m poetry env use python3
@@ -13,7 +18,8 @@ if [  -z "$C_SKETCH_IMPLEMENTATION" ] || [ "$C_SKETCH_IMPLEMENTATION" = "1" ]; t
 
     python3 -m nuitka --user-package-configuration-file=karmtka.nuitka-package.config.yml --remove-output \
         --deployment --mode=onefile --output-filename=karmtka_$(uname -m) src/main.py
-else
+    rm src/sketch/libsketch/libpotrace.so.0
+elif [ "$C_SKETCH_IMPLEMENTATION" = "0" ]; then
     echo "C_SKETCH_IMPLEMENTATION=0" > src/config.py
 
     python3 -m poetry env use python3

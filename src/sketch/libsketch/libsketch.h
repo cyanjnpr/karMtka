@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <potracelib.h>
 
 #ifndef INCLUDE_LIBSKETCH_H
 #define INCLUDE_LIBSKETCH_H
@@ -92,11 +93,15 @@ PacketHeader create_header();
 
 LinePoints create_line(Point* points);
 
-LinePacket create_packet(int layer_id, int counter, Point* points);
+LinePacket create_packet(int layer_id_major, int layer_id_minor, int counter, Point* points);
 
 void encode_leb128(int val, leb128** buf);
 
 void encode_id(int major, int minor, char** buf);
+
+Point new_point_with_shade(int translate_x, int translate_y, int x, int y, int val, int shades);
+
+Point new_point_with_width(int translate_x, int translate_y, int x, int y, int width);
 
 int pixel_to_value(int val, int alpha);
 
@@ -104,8 +109,18 @@ int value_to_shade(int val, int shades);
 
 int get_pixel(stbi_uc* data, int x, int y, int width);
 
+stbi_uc* fit_image(stbi_uc* data, int page_width, int page_height, int margin, int *w, int *h);
+
+int infer_bezier_steps(potrace_dpoint_t a, potrace_dpoint_t u, potrace_dpoint_t w, potrace_dpoint_t b);
+
 size_t serialize_packet(LinePacket packet, char* dest);
 
-size_t convert(char* filename, int page_width, int page_height, int margin, int layer_id, int* id_counter, int shades, char* buf);
+size_t convert_potrace(char *filename, int page_width, 
+    int page_height, int margin, int layer_id_major, 
+    int layer_id_minor, int threshold, int* id_counter, char* buf);
+
+size_t convert_naive(char *filename, int page_width, 
+    int page_height, int margin, int layer_id_major, 
+    int layer_id_minor, int shades, int* id_counter, char* buf);
 
 #endif

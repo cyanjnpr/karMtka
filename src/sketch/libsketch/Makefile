@@ -8,7 +8,7 @@ OBJS = $(SRC:.c=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^ -lm
+	$(CC) $(LDFLAGS) -o $@ $^ -lm -lpotrace
 
-%.o: %.c
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@

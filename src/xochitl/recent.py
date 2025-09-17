@@ -51,8 +51,7 @@ def is_metadata_valid(metadata: Dict) -> bool:
             "type" in metadata and metadata["type"] == ItemType.DOCUMENT.value and
             "parent" in metadata)
 
-def resolve_names(documents: List[RecentItem], collections: Dict[str, RecentItem]):
-    # collections = retrieve_collections()
+def resolve_names(documents: List[RecentItem], collections: Dict[str, Collection]):
     for item in documents:
         if (len(item.parent) > 0 and item.parent in collections):
             item.name = os.path.join(collections[item.parent].name, item.name)
@@ -88,7 +87,7 @@ def retrieve_metadata() -> Tuple[Dict[str, Collection], List[RecentItem]]:
     return collections, recent
 
 
-def retrieve_collections() -> Dict[str, RecentItem]:
+def retrieve_collections() -> Dict[str, Collection]:
     collections, _ = retrieve_metadata()
     return collections
 

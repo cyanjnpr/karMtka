@@ -17,7 +17,8 @@ RUN apt-get update && \
         libtiff-dev \
         liblcms2-dev \
         libwebp-dev \
-        libstb-dev && \
+        libstb-dev \
+        libpotrace-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     python3 -m pip install poetry

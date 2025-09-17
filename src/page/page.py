@@ -25,6 +25,8 @@ class Page(rm_v6.RmV6):
             UuidPacket(self, uid).pack(),
             MigrationPacket(self).pack()
         ]
+        # part of the serializer is written in C, because python is too slow
+        # this part is added as raw bytearray to the part serialized by kaitai
         self.raw = bytearray()
 
     def build_append_stats(self, lines: List[str]):
@@ -35,7 +37,7 @@ class Page(rm_v6.RmV6):
     def build_tree(self, layers = 1):
         root_id = RemarkableId(0)
         self.nodes.append(TreeNodePacket(self, "", root_id))
-        # to match files from the device
+        # move counter to match files from the device
         RemarkableId.move_counter(9)
         for layer in range(1, layers+1):
             layer_id = RemarkableId(0)
@@ -55,20 +57,22 @@ class Page(rm_v6.RmV6):
         if (C_SKETCH_IMPLEMENTATION): ar.extend(self.raw)
         return ar
 
-    def build_append_lines(self, images: List[str], quality: int):
+    def build_append_lines(self, images: List[str], quality: List[int], conversion_method: List[str]):
         for layer, image_path in enumerate(images):
             if (C_SKETCH_IMPLEMENTATION):
-                s = CSketch(self.device_type.value)
-                RemarkableId.internal_counter, raw = s.convert(
-                    image_path, self.layer_ids[layer].minor, RemarkableId.internal_counter, quality)
+                s = CSketch(self.layer_ids[layer], self.device_type.value)
+                RemarkableId.internal_counter, raw = s.convert(RemarkableId.internal_counter,
+                    image_path, quality[min(len(quality)-1, layer)],
+                        conversion_method[min(len(conversion_method)-1, layer)])
                 self.raw.extend(raw)
             else:
                 if (len(self.layer_ids) <= layer): return
-                s = Sketch(self, self.layer_ids[layer])
-                s.draw_image(image_path, quality, self.device_type.value)
+                s = Sketch(self, self.layer_ids[layer], self.device_type.value)
+                s.draw_image(image_path, quality[min(len(quality)-1, layer)], 
+                    conversion_method[min(len(conversion_method)-1, layer)])
                 for l in s.lines: self.packets.append(l.pack())
 
-    def build(self, lines: List[str], styles: List[int], weights: List[int], images: List[str], quality: int):
+    def build(self, lines: List[str], styles: List[int], weights: List[int], images: List[str], quality: List[int], conversion_method: List[str]):
         self.build_append_stats(lines)
         self.build_tree(1 + len(images))
         self.packets.append(SceneInfoPacket(self, self.layer_ids[len(self.layer_ids) - 1]).pack())
@@ -78,5 +82,5 @@ class Page(rm_v6.RmV6):
         self.packets.append(t.pack())
         self.packets.extend([node.pack() for node in self.nodes])
         self.packets.extend([group.pack() for group in self.groups])
-        self.build_append_lines(images, quality)
+        self.build_append_lines(images, quality, conversion_method)
 

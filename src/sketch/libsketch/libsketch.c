@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <math.h>
 
 #define STB_DS_IMPLEMENTATION
 #include <stb/stb_ds.h>
@@ -7,6 +8,8 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb/stb_image_resize.h>
 
+#include <potracelib.h>
+
 #include "libsketch.h"
 
 // xochitl won't render a line consisting of more points
@@ -14,24 +17,13 @@ const int MAX_POINTS = 30000;
 const int POINTS_CAP = 0.7 * MAX_POINTS;
 const int POINT_SIZE = 14;
 
+unsigned char sig_len(unsigned char val) { return val << 4 | 0x0C; }
+unsigned char sig_id(unsigned char val) { return val << 4 | 0x0F; }
+unsigned char sig_int(unsigned char val) { return val << 4 | 0x04; }
+unsigned char sig_dbl(unsigned char val) { return val << 4 | 0x08; }
+
 PacketHeader create_header() {
     return (PacketHeader){0, 0x00, 0x02, 0x02, LINE_PACKET};
-}
-
-unsigned char sig_len(unsigned char val) {
-    return val << 4 | 0x0C;
-}
-
-unsigned char sig_id(unsigned char val) {
-    return val << 4 | 0x0F;
-}
-
-unsigned char sig_int(unsigned char val) {
-    return val << 4 | 0x04;
-}
-
-unsigned char sig_dbl(unsigned char val) {
-    return val << 4 | 0x08;
 }
 
 LinePoints create_line(Point* points) {
@@ -52,7 +44,7 @@ LinePoints create_line(Point* points) {
     return line;
 }
 
-LinePacket create_packet(int layer_id, int counter, Point* points) {
+LinePacket create_packet(int layer_id_major, int layer_id_minor, int counter, Point* points) {
     int sig_cnt = 1;
     LinePacket packet = {
         .header = create_header(),
@@ -65,7 +57,7 @@ LinePacket create_packet(int layer_id, int counter, Point* points) {
     };
     // if one of the parent ids in the packets doesn't match existing layer 
     // all layers in the document will dissapear (except template and text)
-    encode_id(0, layer_id, &packet.parent_id);
+    encode_id(layer_id_major, layer_id_minor, &packet.parent_id);
     encode_id(1, counter, &packet.id);
     encode_id(0, 0, &packet.left);
     encode_id(0, 0, &packet.right);
@@ -87,11 +79,17 @@ void encode_id(int major, int minor, char** buf) {
     encode_leb128(minor, buf);
 }
 
-Point new_point(int translate_x, int translate_y, int x, int y, int val, int shades) {
+Point new_point_with_shade(int translate_x, int translate_y, int x, int y, int val, int shades) {
     char pressure = 0xff * (1.0 - ((float)value_to_shade(val, shades)) / ((float)shades));
     return (Point){(float)(x + translate_x), (float)(y + translate_y), 4, 
         value_to_shade(val, shades) == shades - 1 ? 0 : 4, 
         0, pressure};
+}
+
+Point new_point_with_width(int translate_x, int translate_y, int x, int y, int width) {
+    return (Point){(float)(x + translate_x), (float)(y + translate_y), 4, 
+        width * 4, 
+        0, 0xff};
 }
 
 int pixel_to_value(int val, int alpha) {
@@ -114,6 +112,46 @@ int following_pixel_shade(stbi_uc* data, int following_x, int y, int shades, int
 int get_pixel(stbi_uc* data, int x, int y, int width) {
     int i = (y*width + x) * 2;
     return pixel_to_value(data[i], data[i+1]);
+}
+
+stbi_uc* fit_image(stbi_uc* data, int page_width, int page_height, int margin, int *w, int *h) {
+    int width = *w; int height = *h;
+    if ((float)width / (float)height > (float)page_width / (float)page_height) {
+        if (width > page_width) {
+            stbi_uc* copy = data;
+            int in_w = width;
+            int in_h = height;
+            height = height * page_width / (float)width;
+            width = page_width;
+            data = malloc(width * height * 2);
+            stbir_resize_uint8(copy, in_w, in_h, 0,
+                data, width, height, 0, 2);
+            stbi_image_free(copy);
+        }
+    } else {
+        if (height > page_height) {
+            stbi_uc* copy = data;
+            int in_w = width;
+            int in_h = height;
+            width = width * page_height / (float)height;
+            height = page_height;
+            data = malloc(width * height * 2);
+            stbir_resize_uint8(copy, in_w, in_h, 0,
+                data, width, height, 0, 2);
+            stbi_image_free(copy);
+        }
+    }
+    *w = width; *h = height;
+    return data;
+}
+
+int infer_bezier_steps(potrace_dpoint_t a, potrace_dpoint_t u,
+    potrace_dpoint_t w, potrace_dpoint_t b) {
+    int au = ceil(sqrt(pow(a.x-u.x, 2) + pow(a.y-u.y, 2)));
+    int uw = ceil(sqrt(pow(u.x-w.x, 2) + pow(u.y-w.y, 2)));
+    int wb = ceil(sqrt(pow(w.x-b.x, 2) + pow(w.y-b.y, 2)));
+    int ab = ceil(sqrt(pow(a.x-b.x, 2) + pow(a.y-b.y, 2)));
+    return (int)ceil(sqrt(au + uw + wb - ab)) * 2 + 1;
 }
 
 size_t serialize_packet(LinePacket packet, char* dest) {
@@ -148,7 +186,9 @@ size_t serialize_packet(LinePacket packet, char* dest) {
     return n;
 }
 
-size_t convert(char* filename, int page_width, int page_height, int margin, int layer_id, int *id_counter, int shades, char* buf) {
+size_t convert_naive(char* filename, int page_width, 
+    int page_height, int margin, int layer_id_major, 
+    int layer_id_minor, int shades, int *id_counter, char* buf) {
     size_t result = 0;
 
     int width = 0;
@@ -159,32 +199,7 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
     if (data == NULL) {
         return 0;
     }
-    // resize
-    if ((float)width / (float)height > (float)page_width / (float)page_height) {
-        if (width > page_width) {
-            stbi_uc* copy = data;
-            int in_w = width;
-            int in_h = height;
-            height = height * page_width / (float)width;
-            width = page_width;
-            data = malloc(width * height * 2);
-            stbir_resize_uint8(copy, in_w, in_h, 0,
-                data, width, height, 0, 2);
-            stbi_image_free(copy);
-        }
-    } else {
-        if (height > page_height) {
-            stbi_uc* copy = data;
-            int in_w = width;
-            int in_h = height;
-            width = width * page_height / (float)height;
-            height = page_height;
-            data = malloc(width * height * 2);
-            stbir_resize_uint8(copy, in_w, in_h, 0,
-                data, width, height, 0, 2);
-            stbi_image_free(copy);
-        }
-    }
+    data = fit_image(data, page_width, page_height, margin, &width, &height);
     int translate_x = -width / 2.0;
     int translate_y = margin + (page_height - height) / 2.0;
 
@@ -199,7 +214,7 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
                 if (previous_shade != shade || following_pixel_shade(
                         data, x+1, y, shades, width) != shade) {
                     previous_shade = shade;
-                    arrpush(points, new_point(translate_x, translate_y, x ,y, val, shades));
+                    arrpush(points, new_point_with_shade(translate_x, translate_y, x ,y, val, shades));
                 }
             }
         } else {
@@ -209,7 +224,7 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
                 if (previous_shade != shade || following_pixel_shade(
                         data, x-1, y, shades, width) != shade) {
                     previous_shade = shade;
-                    arrpush(points, new_point(translate_x, translate_y, x ,y, val, shades));
+                    arrpush(points, new_point_with_shade(translate_x, translate_y, x ,y, val, shades));
                 }
             }
         }
@@ -217,7 +232,7 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
         left_to_right = !left_to_right;
 
         if (arrlen(points) >= POINTS_CAP) {
-            result += serialize_packet(create_packet(layer_id, (*id_counter)++, points), buf + result);
+            result += serialize_packet(create_packet(layer_id_major, layer_id_minor, (*id_counter)++, points), buf + result);
             arrfree(points);
             points = NULL;
         }
@@ -225,9 +240,87 @@ size_t convert(char* filename, int page_width, int page_height, int margin, int 
     stbi_image_free(data);
 
     if (arrlen(points) > 0) {
-        result += serialize_packet(create_packet(layer_id, (*id_counter)++, points), buf + result);
+        result += serialize_packet(create_packet(layer_id_major, layer_id_minor, (*id_counter)++, points), buf + result);
         arrfree(points);
     }
+    return result;
+}
+
+size_t convert_potrace(char* filename, int page_width, 
+    int page_height, int margin, int layer_id_major, 
+    int layer_id_minor, int threshold, int *id_counter, char* buf) {
+    size_t result = 0;
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    // channels bw & alpha
+    stbi_uc* data = stbi_load(filename, &width, &height, &channels, 2);
+    if (data == NULL) {
+        return 0;
+    }
+    data = fit_image(data, page_width, page_height, margin, &width, &height);
+    int translate_x = -width / 2.0;
+    int translate_y = margin + (page_height - height) / 2.0;
+
+    unsigned long word_len = sizeof(potrace_word) * 8;
+    potrace_bitmap_t bitmap;
+    bitmap.w = width; bitmap.h = height;
+    bitmap.dy = ceil(bitmap.w / (float)word_len); // len in words
+    bitmap.map =  calloc(bitmap.dy * bitmap.h, sizeof(potrace_word));
+    // convert stbi data to potrace bitmap
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            bitmap.map[y*bitmap.dy + x / word_len] |= 
+                (unsigned long)(get_pixel(data, x, y, width) < threshold) << (word_len - 1 - x % word_len);
+        }
+    }
+    stbi_image_free(data);
+
+    potrace_param_t* param = potrace_param_default();
+    potrace_state_t* state = potrace_trace(param, &bitmap);
+    potrace_param_free(param);
+    free(bitmap.map);
+    if (state->status == POTRACE_STATUS_OK) {
+        if (state->plist == NULL) return result;
+        potrace_path_t* current_path =  state->plist;
+        // each path is a separate line (packet) in rM terms
+        while (current_path != NULL) {
+            Point* points = NULL;
+            potrace_curve_t current_curve = current_path->curve;
+            // try to mimic real drawings
+            // details (small area) are drawn with strokes that are smaller
+            int line_width = 1 + floor(log10(current_path->area));
+            for (int i = 0; i < current_curve.n; i++) {
+                potrace_dpoint_t start = current_curve.c[i ? i-1 : current_curve.n-1][2];
+                potrace_dpoint_t end = current_curve.c[i][2];
+                // arrpush(points, new_point_with_width(translate_x, translate_y, start.x, start.y, line_width));
+                if (current_curve.tag[i] == POTRACE_CORNER) {
+                    arrpush(points, new_point_with_width(translate_x, translate_y, current_curve.c[i][1].x, current_curve.c[i][1].y, line_width));
+                } else if (current_curve.tag[i] == POTRACE_CURVETO) { // bezier
+                    potrace_dpoint_t u = current_curve.c[i][0];
+                    potrace_dpoint_t w = current_curve.c[i][1];
+                    int steps = infer_bezier_steps(start, u, w, end);
+                    for (int j = 0; j < steps; j++) {
+                        float t = j / (float)steps;
+                        int bx = pow(1 - t, 3) * start.x + 3 * pow(1 - t, 2) * t * u.x +
+                            3 * (1 - t) * pow(t, 2) * w.x + pow(t, 3) * end.x;
+                        int by = pow(1 - t, 3) * start.y + 3 * pow(1 - t, 2) * t * u.y +
+                            3 * (1 - t) * pow(t, 2) * w.y + pow(t, 3) * end.y;
+                        arrpush(points, new_point_with_width(translate_x, translate_y, bx, by, line_width));
+                    }
+                }
+                arrpush(points, new_point_with_width(translate_x, translate_y, end.x, end.y, line_width));
+            }
+
+            result += serialize_packet(create_packet(layer_id_major, layer_id_minor, (*id_counter)++, points), buf + result);
+            arrfree(points);
+            points = NULL;
+            current_path = current_path->next;
+        }
+    }
+    potrace_state_free(state);
+
     return result;
 }
 
