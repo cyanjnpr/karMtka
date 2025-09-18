@@ -45,12 +45,25 @@ class CSketch():
             ctypes.POINTER(type(self.buf)) # buf
             ]
         libsketch.convert_naive.restype = ctypes.c_size_t
+        libsketch.convert_cutoff.argtypes = [ctypes.c_char_p, # filename
+            ctypes.c_int, # page width
+            ctypes.c_int, # page height
+            ctypes.c_int, # page margin
+            ctypes.c_int, # layer id major
+            ctypes.c_int, # layer id minor
+            ctypes.c_int, # threshold
+            ctypes.POINTER(ctypes.c_int), # id counter
+            ctypes.POINTER(type(self.buf)) # buf
+            ]
+        libsketch.convert_cutoff.restype = ctypes.c_size_t
 
     def convert(self,  id_cnt: int, filename: str, q: int, conversion: str) -> Tuple[int, bytes]:
         if conversion == ImageConversion.NAIVE.name:
             return self.convert_naive(id_cnt, filename, q)
         elif conversion == ImageConversion.POTRACE.name:
             return self.convert_potrace(id_cnt, filename, q)
+        elif conversion == ImageConversion.CUTOFF.name:
+            return self.convert_cutoff(id_cnt, filename, q)
     
     def convert_naive(self, id_cnt: int, filename: str, shades: int):
         counter = ctypes.c_int(id_cnt)
@@ -58,6 +71,14 @@ class CSketch():
             filename.encode(), self.device_type.w(), self.device_type.h(), 
             self.device_type.margin, self.layer_id.major, self.layer_id.minor, 
             shades, ctypes.byref(counter), ctypes.byref(self.buf))
+        return counter.value.real, self.buf[:size]
+    
+    def convert_cutoff(self, id_cnt: int, filename: str, threshold: int):
+        counter = ctypes.c_int(id_cnt)
+        size = libsketch.convert_cutoff(
+            filename.encode(), self.device_type.w(), self.device_type.h(), 
+            self.device_type.margin, self.layer_id.major, self.layer_id.minor, 
+            threshold, ctypes.byref(counter), ctypes.byref(self.buf))
         return counter.value.real, self.buf[:size]
 
     def convert_potrace(self, id_cnt: int, filename: str, threshold: int):

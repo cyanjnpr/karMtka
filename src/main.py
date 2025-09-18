@@ -49,6 +49,7 @@ last - inject new content (overwrite) into last page in last closed notebook",
 @click.option("-G", "--conversion-method", "conversion_method", default=[ImageConversion.NAIVE.name], multiple=True,
     help="conversion method for the provided image, default is 'naive'\n\n\
 naive - convert line by line, placing new point whenever color changes\n\n\
+cutoff - same as naive, but always assume two shades and use -q as cutoff threshold\n\n\
 potrace - trace outlines with potrace",
     type=click.Choice(ImageConversion.choices(), case_sensitive=False))
 @click.option("-q", "--quality", "--threshold", "quality", default=[3], multiple=True,

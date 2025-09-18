@@ -12,3 +12,7 @@ $(TARGET): $(OBJS)
 
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+

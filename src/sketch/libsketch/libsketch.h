@@ -105,7 +105,13 @@ Point new_point_with_width(int translate_x, int translate_y, int x, int y, int w
 
 int pixel_to_value(int val, int alpha);
 
+int value_cutoff(int val, int threshold);
+
+int following_pixel_cutoff(stbi_uc* data, int following_x, int y, int threshold, int width);
+
 int value_to_shade(int val, int shades);
+
+int following_pixel_shade(stbi_uc* data, int following_x, int y, int shades, int width);
 
 int get_pixel(stbi_uc* data, int x, int y, int width);
 
@@ -122,5 +128,9 @@ size_t convert_potrace(char *filename, int page_width,
 size_t convert_naive(char *filename, int page_width, 
     int page_height, int margin, int layer_id_major, 
     int layer_id_minor, int shades, int* id_counter, char* buf);
+
+size_t convert_cutoff(char* filename, int page_width, 
+    int page_height, int margin, int layer_id_major, 
+    int layer_id_minor, int threshold, int *id_counter, char* buf);
 
 #endif

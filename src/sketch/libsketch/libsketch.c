@@ -100,6 +100,15 @@ int pixel_to_value(int val, int alpha) {
     return (int)(val + ((255 - val) * (1 - (alpha / 255.0))));
 }
 
+int value_cutoff(int val, int threshold) {
+    return (val > threshold) * 255;
+}
+
+int following_pixel_cutoff(stbi_uc* data, int following_x, int y, int threshold, int width) {
+    if (following_x < 0 || following_x == width) return -1;
+    return value_cutoff(get_pixel(data, following_x, y, width), threshold);
+}
+
 int value_to_shade(int val, int shades) {
     return (int)floor(val / 256.0 * shades);
 }
@@ -229,6 +238,66 @@ size_t convert_naive(char* filename, int page_width,
             }
         }
         previous_shade = -1;
+        left_to_right = !left_to_right;
+
+        if (arrlen(points) >= POINTS_CAP) {
+            result += serialize_packet(create_packet(layer_id_major, layer_id_minor, (*id_counter)++, points), buf + result);
+            arrfree(points);
+            points = NULL;
+        }
+    }
+    stbi_image_free(data);
+
+    if (arrlen(points) > 0) {
+        result += serialize_packet(create_packet(layer_id_major, layer_id_minor, (*id_counter)++, points), buf + result);
+        arrfree(points);
+    }
+    return result;
+}
+
+size_t convert_cutoff(char* filename, int page_width, 
+    int page_height, int margin, int layer_id_major, 
+    int layer_id_minor, int threshold, int *id_counter, char* buf) {
+    size_t result = 0;
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    // channels bw & alpha
+    stbi_uc* data = stbi_load(filename, &width, &height, &channels, 2);
+    if (data == NULL) {
+        return 0;
+    }
+    data = fit_image(data, page_width, page_height, margin, &width, &height);
+    int translate_x = -width / 2.0;
+    int translate_y = margin + (page_height - height) / 2.0;
+
+    Point* points = NULL;
+    int previous_state = -1;
+    bool left_to_right = true;
+    for (int y = 0; y < height; y++) {
+        if (left_to_right) {
+            for (int x = 0; x < width; x++) {
+                int val = get_pixel(data, x, y, width);
+                int state = value_cutoff(val, threshold);
+                if (previous_state != state || following_pixel_cutoff(
+                        data, x+1, y, threshold, width) != state) {
+                    previous_state = state;
+                    arrpush(points, new_point_with_shade(translate_x, translate_y, x ,y, state, 2));
+                }
+            }
+        } else {
+            for (int x = width - 1; x >= 0; x--) {
+                int val = get_pixel(data, x, y, width);
+                int state = value_cutoff(val, threshold);
+                if (previous_state != state || following_pixel_cutoff(
+                        data, x-1, y, threshold, width) != state) {
+                    previous_state = state;
+                    arrpush(points, new_point_with_shade(translate_x, translate_y, x ,y, state, 2));
+                }
+            }
+        }
+        previous_state = -1;
         left_to_right = !left_to_right;
 
         if (arrlen(points) >= POINTS_CAP) {

@@ -4,6 +4,9 @@ from potrace import Bitmap, Path
 from typing import Tuple, List
 import math
 
+# this needs to be rewritten, C implementation is clean tho
+#                  or removed
+
  # Point class is private inside potracer
 class Point:
     def __init__(self, x: float = 0, y: float = 0):
@@ -82,8 +85,20 @@ class SketchImage():
                     int(self.image_file.width * self.screen_height / float(self.image_file.height)), 
                     self.screen_height))
 
-    def value_to_shade(self, val: float) -> int:
-        return math.floor(val / 256 * self.shades)
+    def value_cutoff(self, val: int) -> int:
+        return 255 if val > self.shades else 0 
+    
+    def following_pixel_cutoff(self, x: int) -> int:
+        following_x: int
+        if (self.left_to_right):
+            following_x = x + 1
+        else:
+            following_x = x - 1
+        if (following_x < 0  or following_x == self.image_file.width): return -1
+        return self.value_cutoff(self.getpixel((following_x, self.current_y)))
+
+    def value_to_shade(self, val: int) -> int:
+        return math.floor(val / 256.0 * self.shades)
     
     def following_pixel_shade(self, x: int) -> int:
         following_x: int
@@ -134,6 +149,31 @@ class SketchImage():
         self.EOF = True
         return None
     
+    def next_pixel_cutoff(self) -> Tuple[Tuple[int, int], float]:
+        for y in range(self.current_y, self.image_file.height):
+            self.current_y = y
+            if (self.left_to_right):
+                for x in range(self.current_x, self.image_file.width):
+                    val = self.getpixel((x, y))
+                    state = self.value_cutoff(val)
+                    if (self.previous_shade != state or self.following_pixel_cutoff(x) != state):
+                        self.current_x = x + 1
+                        self.previous_shade = state
+                        return ((x, y), state)
+            else:
+                for x in range(self.current_x, -1, -1):
+                    val = self.getpixel((x, y))
+                    state = self.value_cutoff(val)
+                    if (self.previous_shade != state or self.following_pixel_cutoff(x) != state):
+                        self.current_x = x - 1
+                        self.previous_shade = state
+                        return ((x, y), state)
+            self.previous_shade = -1
+            self.left_to_right = not self.left_to_right
+            self.current_x = 0 if self.left_to_right else self.image_file.width - 1
+        self.EOF = True
+        return None
+    
     def next_segment(self):
         seg = self.potrace_path.curves[0].segments.pop(0)
         self.is_saved_segment_last = False
@@ -165,6 +205,15 @@ class SketchImage():
         if (self.conversion_method == ImageConversion.NAIVE.name):
             pixel = self.saved_pixel
             self.saved_pixel = self.next_pixel()
+            if (pixel == None): return None
+            (x,y), val = pixel
+            shade = self.value_to_shade(val)
+            width = 0 if shade == self.shades - 1 else 1
+            pressure = 1 - shade / self.shades
+            return x+translate_x, y+translate_y, 1, width, 0, pressure, False
+        elif (self.conversion_method == ImageConversion.CUTOFF.name):
+            pixel = self.saved_pixel
+            self.saved_pixel = self.next_pixel_cutoff()
             if (pixel == None): return None
             (x,y), val = pixel
             shade = self.value_to_shade(val)

@@ -18,6 +18,7 @@ if [  -z "$C_SKETCH_IMPLEMENTATION" ] || [ "$C_SKETCH_IMPLEMENTATION" = "1" ]; t
 
     python3 -m nuitka --user-package-configuration-file=karmtka.nuitka-package.config.yml --remove-output \
         --deployment --mode=onefile --output-filename=karmtka_$(uname -m) src/main.py
+    (cd src/sketch/libsketch && make clean)
     rm src/sketch/libsketch/libpotrace.so.0
 elif [ "$C_SKETCH_IMPLEMENTATION" = "0" ]; then
     echo "C_SKETCH_IMPLEMENTATION=0" > src/config.py
